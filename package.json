@@ -1,0 +1,28 @@
+{
+  "name": "hdi_scrapper",
+  "version": "1.0.0",
+  "description": "Simple web scrapper script managger written in javascript using node.js runtime",
+  "main": "index.js",
+  "scripts": {
+    "dev" : "nodemon index.js",
+    "start" : "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "node.js",
+    "scrapper",
+    "javascript"
+  ],
+  "author": "Nurfitri",
+  "license": "ISC"
+  "dependencies": {
+    "axios": "^0.20.0",
+    "cheerio": "^1.0.0-rc.3",
+    "dotenv": "^8.2.0",
+    "mongoose": "^5.10.0",
+    "nodemon": "^2.0.4",
+    "puppeteer": "^5.2.1",
+    "require-context": "^1.1.0",
+    "xml2js": "^0.4.23"
+  }
+}
