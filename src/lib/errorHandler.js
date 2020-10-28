@@ -7,7 +7,7 @@ lib.mongoInsertError = (error,article) => {
  if(error.name = 'MongoError' && error.code ===11000){
    //create error payload,
    const errorPayload = {
-     time: new Date();
+     time: new Date(),
      error: {
        name: 'Duplicate Key',
        code: error.code,
@@ -30,7 +30,7 @@ lib.mongoInsertError = (error,article) => {
  }
   if(error.name == 'ValidationError'){
     const errorPayload = {
-      time: new Date();
+      time: new Date(),
       error: {
         name : 'ValidationError',
         source: article.link,

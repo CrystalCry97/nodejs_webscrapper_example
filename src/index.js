@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const scripts = require('./scripts');
 const mongoURL = require('./configs/mongo');
 const errorHandler = require('./lib/errorHandler');
+const ArticleSchema = require('./models/articles');
 
 const app = {};
 
@@ -26,4 +27,6 @@ db.on('error',console.error.bind(console,'MongoDB connection Error'));
 db.once('open',function(){
   //run the scripts;
   app.run();
+  console.log('DONE');
+  process.exit(0);
 });
