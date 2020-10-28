@@ -9,10 +9,5 @@ require('fs').readdirSync(folderPath).forEach(function(file){
 
 });
 
-//console.log(__dirname);
-//console.log(__filename);
-//console.log(folderPath);
-//console.log('SCRIPTS:',scripts);
-
 module.exports = scripts;
 

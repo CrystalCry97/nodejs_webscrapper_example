@@ -8,7 +8,7 @@ const ArticleSchema = require('./models/articles');
 const app = {};
 
 app.run = async () =>{ 
-  const promises = await Object.values(scripts).map(async function(site){
+  await Object.values(scripts).map(async function(site){
     try{
       console.log('SITE:',site);
       site.Model = mongoose.model(site.name,ArticleSchema);
@@ -20,9 +20,8 @@ app.run = async () =>{
       errorHandler.scriptError(error);
       //console.error('ScriptsError:',error);
     }
-  }); 
-  await Promise.all(promises);
-  return 1;
+  });  
+  return Promise.resolve(1);
 }
 
 console.log('MONGO_URL:',mongoURL);
