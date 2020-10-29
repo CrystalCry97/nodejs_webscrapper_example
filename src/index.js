@@ -11,8 +11,8 @@ const app = {};
 
 app.init = async () => {
   app.connection = {};
-  await mongoConnect(URI,'crawlers');
-  await mongoConnect(URI2,'amalwebserver');
+  await mongoConnect(URI,process.env.MONGO_DB_NAME);
+  await mongoConnect(URI2,process.env.MONGO2_DB_NAME);
   return 'MongoInit Completed';
 }
 
@@ -47,23 +47,21 @@ app.run = async () =>{
 app.mergeData = (collections) =>{
   try{
     collections.forEach(function(site){
-    const crawlers = app.connection['crawlers'].model(site.name,ArticleSchema);
-    crawlers.find().lean().exec(function(error,result){
+    const crawlers = app.connection[process.env.MONGO_DB_NAME].model(site.name,ArticleSchema);
+    crawlers.find({},'title link abstract category year').lean().exec(function(error,result){
       if(error) throw error;
       if(result){
-        const jsonRes = JSON.stringify(result);
-        //testing write to file;
-        const filename = `${site.name}.js`;
-        _log.baseDir = path.join(__dirname,'./Collection/');
-        console.log('Location:',_log.baseDir);
-        _log.append(filename,jsonRes,function(error){
-          if(!error){
-            console.log('Collection Written to File');
-          }else{
-            console.error(error);
+        //copy content to new DB
+        const newDb = app.connection[process.env.MONGO2_DB_NAME].model('crawled',ArticleSchema); //crawled is the collection name
+        newDb.insertMany(result,{ordered:false},function(error,docs){
+          if(error){
+            console.error('Error while inserting into new db');
+          }
+          if(docs){
+            console.log('Insert into new DB gracefully');
           }
         });
-
+        
       }
     })
     //console.log(model); 
