@@ -27,7 +27,7 @@ const mongoConnect = async (URI,connectionName) =>{
 
 }
 
-app.run = async () =>{ 
+app.crawl = async () =>{ 
   await Object.values(scripts).map(async function(site){
     try{
       console.log('SITE:',site);
