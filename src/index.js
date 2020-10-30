@@ -4,8 +4,7 @@ const scripts = require('./scripts/index');
 const {URI,URI2} = require('./configs/mongo');
 const errorHandler = require('./lib/errorHandler');
 const ArticleSchema = require('./models/articles');
-const _log = require('./lib/log');
-const path = require('path');
+const {mergeCollection} = require('./lib/mergedb');
 
 const app = {};
 
@@ -44,38 +43,38 @@ app.crawl = async () =>{
   return Promise.resolve(1);
 }
 
-app.mergeData = (collections) =>{
-  try{
-    collections.forEach(function(site){
-    const crawlers = app.connection[process.env.MONGO_DB_NAME].model(site.name,ArticleSchema);
-    crawlers.find({},'title link abstract category year').lean().exec(function(error,result){
-      if(error) throw error;
-      if(result){
-        //copy content to new DB
-        const newDb = app.connection[process.env.MONGO2_DB_NAME].model('crawled',ArticleSchema); //crawled is the collection name
-        newDb.insertMany(result,{ordered:false},function(error,docs){
-          if(error){
-            console.error('Error while inserting into new db');
-          }
-          if(docs){
-            console.log('Insert into new DB gracefully');
-          }
-        });
+//app.mergeData = (collections) =>{
+  //try{
+    //collections.forEach(function(site){
+    //const crawlers = app.connection[process.env.MONGO_DB_NAME].model(site.name,ArticleSchema);
+    //crawlers.find({},'title link abstract category year').lean().exec(function(error,result){
+      //if(error) throw error;
+      //if(result){
+        ////copy content to new DB
+        //const newDb = app.connection[process.env.MONGO2_DB_NAME].model('crawled',ArticleSchema); //crawled is the collection name
+        //newDb.insertMany(result,{ordered:false},function(error,docs){
+          //if(error){
+            //console.error('Error while inserting into new db');
+          //}
+          //if(docs){
+            //console.log('Insert into new DB gracefully');
+          //}
+        //});
         
-      }
-    })
-    //console.log(model); 
-  })
-  }catch(error){
-    console.log('Error Captured Here:',error);
-  }
-}
+      //}
+    //})
+    ////console.log(model); 
+  //})
+  //}catch(error){
+    //console.log('Error Captured Here:',error);
+  //}
+//}
 
 app.run = async () =>{
   await app.init();
-  const db = app.connection['crawlers'].db;
-  const collections = await db.listCollections().toArray();
-  await app.mergeData(collections);
+  mergeCollection(app.connection);
+
+  
  
 }
 
