@@ -56,7 +56,7 @@ app.run = async () =>{
     await mergeCollection(app.connection); 
   }catch(error){
     console.error('We Found Error...');
-    process.exit(1);
+    //process.exit(1);
   }finally{
     process.exit(0);
   } 
