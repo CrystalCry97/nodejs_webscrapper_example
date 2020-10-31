@@ -8,22 +8,27 @@ const {mergeCollection} = require('./lib/mergedb');
 
 const app = {};
 
-app.init = async () => {
-  app.connection = {};
-  await mongoConnect(URI,process.env.MONGO_DB_NAME);
-  await mongoConnect(URI2,process.env.MONGO2_DB_NAME);
-  return 'MongoInit Completed';
+const init = async () => {
+  const connection = {};
+  try{
+    connection[process.env.MONGO_DB_NAME] = await mongoConnect(URI,process.env.MONGO_DB_NAME);
+    connection[process.env.MONGO2_DB_NAME] = await mongoConnect(URI2,process.env.MONGO2_DB_NAME);
+    console.log('Created connection');
+    return Promise.resolve(connection);
+  }catch(error){
+    return Promise.reject(error);
+  }
 }
 
 const mongoConnect = async (URI,connectionName) =>{
  try{
    const connection = await mongoose.createConnection(URI); 
-   app.connection[connectionName] = connection;
    console.log('Created Connection:',connectionName);
+   return Promise.resolve(connection);
  }catch(error){
-  console.error('Error Creating Connection:',error);
+    console.error('Error Creating Connection:',error);
+    return Promise.reject(error);
  } 
-
 }
 
 app.crawl = async () =>{ 
@@ -43,39 +48,18 @@ app.crawl = async () =>{
   return Promise.resolve(1);
 }
 
-//app.mergeData = (collections) =>{
-  //try{
-    //collections.forEach(function(site){
-    //const crawlers = app.connection[process.env.MONGO_DB_NAME].model(site.name,ArticleSchema);
-    //crawlers.find({},'title link abstract category year').lean().exec(function(error,result){
-      //if(error) throw error;
-      //if(result){
-        ////copy content to new DB
-        //const newDb = app.connection[process.env.MONGO2_DB_NAME].model('crawled',ArticleSchema); //crawled is the collection name
-        //newDb.insertMany(result,{ordered:false},function(error,docs){
-          //if(error){
-            //console.error('Error while inserting into new db');
-          //}
-          //if(docs){
-            //console.log('Insert into new DB gracefully');
-          //}
-        //});
-        
-      //}
-    //})
-    ////console.log(model); 
-  //})
-  //}catch(error){
-    //console.log('Error Captured Here:',error);
-  //}
-//}
 
 app.run = async () =>{
-  await app.init();
-  mergeCollection(app.connection);
-
-  
- 
+  try{
+    app.connection = await init();
+    console.log('received connection..');
+    await mergeCollection(app.connection); 
+  }catch(error){
+    console.error('We Found Error...');
+    process.exit(1);
+  }finally{
+    process.exit(0);
+  } 
 }
 
 app.run();
