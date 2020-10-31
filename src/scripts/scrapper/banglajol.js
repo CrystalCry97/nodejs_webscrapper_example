@@ -265,7 +265,11 @@ const getResultFromHTML = (html) =>{
 const getHTML = async (URL) => {
   const iPhone = puppeteer.devices['iPhone 6'];
   //const browser = await puppeteer.launch({headless:false});
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+        headless:true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+  //const browser = await puppeteer.launch();
   try{
     const page = await browser.newPage();
     await page.emulate(iPhone);
