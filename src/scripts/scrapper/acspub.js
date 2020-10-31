@@ -1,6 +1,7 @@
 const puppeteer     = require('puppeteer');
 const cheerio       = require('cheerio');
 const {promisify}   = require('util');
+const {getHTML,insertDB,insertErrorHandler,sleep}       = require('../../lib/crawler');
 
 const keywords = [
   'Drug-herb',
@@ -114,7 +115,7 @@ const crawlEachPages = async ({pages},key) =>{
         });
         const articles = await Promise.all(promises); 
         //console.log('ARTICLE:',articles);
-        await insertDB(articles);
+        await insertDB(articles,site.Model);
         i++;
       }
     }
@@ -142,10 +143,6 @@ const getArticleFromHTML = (html,url)=>{
       const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
       const type = site.type;
 
-      //console.log('TITLE:',title);
-      //console.log('YEAR:',volume);
-      //console.log('LINK:',link);
-      //console.log('\nDESCRIPTION: ',abstracts);
       return {
         title,
         link,
@@ -159,7 +156,6 @@ const getArticleFromHTML = (html,url)=>{
   }catch(error){
     console.error(error);
     return null;
-    //return null;
   }
   
 }
@@ -174,7 +170,6 @@ const getURLsFromHTML = (html) => {
       const url = $(el).attr('href');
       return site.baseURL + url;
     }).get();
-    //console.log('URL_LIST:',urls);
     return urls;
   }catch(error){}
 }
@@ -202,54 +197,5 @@ const getResultFromHTML = (html) =>{
   }
 }
 
-
-
-// ------------ mostly unchanged code -----------------
-
-const getHTML = async (URL) => {
-  const iPhone = puppeteer.devices['iPhone 6'];
-  //const browser = await puppeteer.launch({headless:false});
-  const browser = await puppeteer.launch();
-  try{
-    const page = await browser.newPage();
-    await page.emulate(iPhone);
-    await page.goto(URL,{waitUntil:"domcontentloaded"});
-    const html = await page.content();
-    return html;
-
-  }catch(error){
-    if(error.name == 'TimeoutError'){
-      console.log('Web Page Takes to long to response');
-      return null;
-    }
-    console.error(error);
-  }finally{
-    await browser.close();
-  }
-}
-
-
-const insertDB = async (articles) => {
-   const Article = site.Model;
-   articles.map(function(article){
-     if(article !== null){
-       Article.create(article,function(error,result){
-         if(error) insertErrorHandler(error,article);
-         if(result) site.counts += 1;
-       });
-     }
-   });
-}
- 
-const sleep = promisify(setTimeout);
-
-const insertErrorHandler = (error,article) => {
-  if(error.name == 'MongoError' && error.code === 11000){
-    console.error('Duplicate Key Error:',article.link);
-  }
-  if(error.name == 'ValidationError'){
-    console.error('ValidationError:',article.link);
-  }
-}
 
 module.exports = site;

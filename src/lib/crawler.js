@@ -44,24 +44,16 @@ lib.puppySearch = async (keyword) => {
 }
 
 
-lib.getResultFromHTML = (html,selector) => {
-  try{
-    const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
-    //const getResult = new Function('selector','selecStr') 
-    if(result !== undefined){
-      
-    }
-  }catch(error){
-    return null;
-  }
-}
-
 // ====================== reusable code section ================================
 
 lib.getHTML = async (URL) => {
   const iPhone = puppeteer.devices['iPhone 6'];
   //const browser = await puppeteer.launch({headless:false});
-  const browser = await puppeteer.launch();
+  //const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+        headless:true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
   try{
     const page = await browser.newPage();
     await page.emulate(iPhone);
@@ -86,7 +78,7 @@ lib.insertDB = async (articles,Model) => {
    articles.map(function(article){
      if(article !== null){
        Article.create(article,function(error,result){
-         if(error) insertErrorHandler(error,article);
+         if(error) lib.insertErrorHandler(error,article);
          if(result) site.counts += 1;
        });
      }

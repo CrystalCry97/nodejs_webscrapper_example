@@ -2,6 +2,7 @@ const puppeteer     = require('puppeteer');
 const cheerio       = require('cheerio');
 const {promisify}   = require('util');
 const querystring   = require('querystring');
+const crawler       = require('../../lib/crawler');
 
 const keywords = [
   'Drug-herb',
@@ -51,9 +52,6 @@ const site = {
   perPage:20,
   queries:{
     page: '&searchPage=',
-    //limit: '&pageSize=',
-    //category: '&ConceptID=',
-    //sort: '&orderBy=Earliest&orderDir=',
   },
   selectors:{
     results : 'div[class="cmp_pagination"]', //$(result).text(); 
@@ -81,51 +79,14 @@ const genURL = (searchTerms,n_page=1) =>{
   return site.searchURL+searchKey+page+n_page;
 }
 
-
-//puppySearch is a new function that will perform in browser post search instead of using url get request.
-//it will return a html, just like getHTML function
-const puppySearch = async (keyword) => {
-  const iPhone = await puppeteer.devices['iPhone 6'];
-  const browser = await puppeteer.launch({headless:false});
-  //const browser = await puppeteer.launch();
-  try{
-    const page = await browser.newPage();
-    const formData = {
-      'csrfToken': 'ed40c777d0985e9bda264d0fd990f9d9',
-      'query' : keyword,
-    };
-    await page.setRequestInterception(true);
-    page.once('request',request=>{
-      var data = {
-        'method':'POST',
-        'postData':querystring.stringify(formData),
-        'headers':{
-          ...request.headers(),
-          'Content-Type':'application/x-www-form-urlencoded',
-          'Origin':'https://www.banglajol.info',
-          'Referer':'https://www.banglajol.info/index.php/index/search/search'
-        }
-      };
-      request.continue(data);
-      page.setRequestInterception(false);
-    });
-    await page.goto(site.searchURL);
-    const response = await page.content();
-    //console.log('RESP:',response);
-    return response;
-
-  }catch(error){
-    console.error('Error In PuppySearch:',error);
-  }finally{
-    await browser.close();
-  }
-}
+const getHTML = crawler.getHTML;
+const insertDB = crawler.insertDB;
+const insertErrorHandler = crawler.insertErrorHandler;
 // ------------ crawl and crawl eachpage is mostly not changing, depends on the page flow---
 
 const crawl = async () =>{
   for(let i = 0 ; i < keywords.length;){
     const key = keywords[i];
-    //console.log('KEY:',key);
     const url = genURL(key);
     console.log('URL:',url);
     const html = await getHTML(url);
@@ -150,10 +111,7 @@ const crawlEachPages = async ({pages},key) =>{
       const urls = getURLsFromHTML(html);
       const n = 10 ; // change this 10 links per url_list;
       const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_ =>urls.splice(0,n));
-      //console.log('URL_LIST:',url_list);
       for (let i = 0; i < url_list.length;){
-        //const url_list = (i == 1) ? urls.slice(0,9) : urls.slice(10,19);
-        //console.log("URL_LIST:",url_list);   
         const promises = await url_list[i].map(async function(url){
         const html = await getHTML(url);//puppeteer have problem when open more than 10 windows, causing max eventlistener error.
         if(html !== null){
@@ -164,7 +122,6 @@ const crawlEachPages = async ({pages},key) =>{
         }
         });
         const articles = await Promise.all(promises); 
-        //console.log('ARTICLE:',articles);
         await insertDB(articles);
         i++;
       }
@@ -181,7 +138,6 @@ const getArticleFromHTML = (html,url)=>{
   try{
     const {selectors} = site;
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
-    //const link = $(selectors.link).attr('content');
     const link = url;
     const title = $(selectors.title).text();
     if( typeof title === 'string' || title instanceof String){
@@ -191,11 +147,7 @@ const getArticleFromHTML = (html,url)=>{
       const year = $(selectors.year).text();
       const type = site.type;
 
-      //console.log('TITLE:',title);
-      //console.log('YEAR:',volume);
-      //console.log('LINK:',link);
-      //console.log('\nDESCRIPTION: ',abstracts);
-      return {
+     return {
         title,
         link,
         abstract: abstracts,
@@ -208,7 +160,6 @@ const getArticleFromHTML = (html,url)=>{
   }catch(error){
     console.error(error);
     return null;
-    //return null;
   }
   
 }
@@ -221,10 +172,8 @@ const getURLsFromHTML = (html) => {
     const $ = cheerio.load(html,{normalizeWhitespace:true, xmlMode:true});
     const urls = $(page_link).map(function(i,el){
       const url = $(el).attr('href');
-      //return site.baseURL + url;
       return url;
     }).get();
-    //console.log('URL_LIST:',urls);
     return urls;
   }catch(error){}
 }
@@ -258,58 +207,5 @@ const getResultFromHTML = (html) =>{
 }
 
 
-
-// ------------ mostly unchanged code -----------------
-
-
-const getHTML = async (URL) => {
-  const iPhone = puppeteer.devices['iPhone 6'];
-  //const browser = await puppeteer.launch({headless:false});
-  const browser = await puppeteer.launch({
-        headless:true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
-  //const browser = await puppeteer.launch();
-  try{
-    const page = await browser.newPage();
-    await page.emulate(iPhone);
-    await page.goto(URL,{waitUntil:"domcontentloaded"});
-    const html = await page.content();
-    return html;
-
-  }catch(error){
-    if(error.name == 'TimeoutError'){
-      console.log('Web Page Takes to long to response');
-      return null;
-    }
-    console.error(error);
-  }finally{
-    await browser.close();
-  }
-}
-
-
-const insertDB = async (articles) => {
-   const Article = site.Model;
-   articles.map(function(article){
-     if(article !== null){
-       Article.create(article,function(error,result){
-         if(error) insertErrorHandler(error,article);
-         if(result) site.counts += 1;
-       });
-     }
-   });
-}
- 
-const sleep = promisify(setTimeout);
-
-const insertErrorHandler = (error,article) => {
-  if(error.name == 'MongoError' && error.code === 11000){
-    console.error('Duplicate Key Error:',article.link);
-  }
-  if(error.name == 'ValidationError'){
-    console.error('ValidationError:',article.link);
-  }
-}
 
 module.exports = site;

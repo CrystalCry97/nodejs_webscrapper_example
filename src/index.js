@@ -45,6 +45,7 @@ app.crawl = async () =>{
       }
     }catch(error){
       console.log('Error while crawling...');
+      console.log('Error:',error);
       errors.push(error);
     }finally{
       //await mergeCollection(app.connection); 
@@ -57,7 +58,7 @@ app.run = async () =>{
   try{
     app.connection = await init();
     console.log('received connection..');
-    //await app.crawl();
+    await app.crawl();
     console.log('Finished crawling');
     await mergeCollection(app.connection);
   }catch(error){
