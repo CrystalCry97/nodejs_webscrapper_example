@@ -14,7 +14,8 @@ lib.mergeCollection = async (connection,callback) => {
     const errors = [];
     try{
       const db = connection[process.env.MONGO_DB_NAME].db;
-      const newDb = connection[process.env.MONGO2_DB_NAME].model('article',ArticleSchema);
+      const newDb = connection[process.env.MONGO2_DB_NAME].model('crawled',ArticleSchema);
+      //const newDb = connection[process.env.MONGO2_DB_NAME].model('article',ArticleSchema);
       const collections = await db.listCollections().toArray();
       console.log('Starting...');
       for ( let i= 0 ; i <= collections.length; ){
