@@ -67,9 +67,10 @@ const site = {
 
 }
 
-site.crawl = () => {
-  crawl();
-  return Promise.resolve('Finished');
+site.crawl = async () => {
+  const promise =  await crawl();
+  console.log('Finished crawl');
+  return promise;
   //puppySearch('Herb');
 }
 
@@ -137,6 +138,7 @@ const crawl = async () =>{
     i++;
   } 
   console.log('Finished with:',site.counts);
+  return Promise.resolve('Finished');
 }
 
 const crawlEachPages = async ({pages},key) =>{

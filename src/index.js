@@ -32,20 +32,24 @@ const mongoConnect = async (URI,connectionName) =>{
 }
 
 app.crawl = async () =>{ 
-  await Object.values(scripts).map(async function(site){
+  const con1 = app.connection[process.env.MONGO_DB_NAME];
+  const errors = [];
+ 
     try{
-      console.log('SITE:',site);
-      site.Model = con1.model(site.name,ArticleSchema);
-      console.log('Info:',site.info);
-      await site.crawl();
-      return Promise.resolve("Done"); 
+      for ( let i = 0; i < Object.values(scripts).length; ){
+        const site = Object.values(scripts)[i];
+        console.log('Crawling..:',site);
+        site.Model = con1.model(site.name,ArticleSchema);
+        await site.crawl();
+        i++;
+      }
     }catch(error){
-      //errorHandler,
-      errorHandler.scriptError(error);
-      //console.error('ScriptsError:',error);
-    }
-  });  
-  return Promise.resolve(1);
+      console.log('Error while crawling...');
+      errors.push(error);
+    }finally{
+      //await mergeCollection(app.connection); 
+      console.log('Done maybe .. ?');
+    } 
 }
 
 
@@ -53,9 +57,12 @@ app.run = async () =>{
   try{
     app.connection = await init();
     console.log('received connection..');
-    await mergeCollection(app.connection); 
+    await app.crawl();
+    console.log('Finished crawling');
+    await mergeCollection(app.connection);
   }catch(error){
     console.error('We Found Error...');
+    console.error('Error are:',error);
     //process.exit(1);
   }finally{
     process.exit(0);

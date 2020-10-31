@@ -10,11 +10,11 @@ lib.mergeCollection = async (connection,callback) => {
       //});
     //});
   //}
-   await new Promise(async function(resolve,reject){
+   return await new Promise(async function(resolve,reject){
     const errors = [];
     try{
       const db = connection[process.env.MONGO_DB_NAME].db;
-      const newDb = connection[process.env.MONGO2_DB_NAME].model('crawled',ArticleSchema);
+      const newDb = connection[process.env.MONGO2_DB_NAME].model('article',ArticleSchema);
       const collections = await db.listCollections().toArray();
       console.log('Starting...');
       for ( let i= 0 ; i <= collections.length; ){
@@ -45,6 +45,7 @@ lib.mergeCollection = async (connection,callback) => {
 
     }
      console.log('I should be waiting for errors...');
+    
   });
 }
 module.exports = lib;
