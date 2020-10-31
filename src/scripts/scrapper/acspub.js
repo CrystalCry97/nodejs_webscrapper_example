@@ -1,7 +1,6 @@
 const puppeteer     = require('puppeteer');
 const cheerio       = require('cheerio');
 const {promisify}   = require('util');
-const querystring   = require('querystring');
 
 const keywords = [
   'Drug-herb',
@@ -27,107 +26,60 @@ const keywords = [
   'ABC:ATP binding cassette transporter super family',
 ]
 
-// ========================= KIV ==============================================
-// this site use post request, so there is no ways for us to manipulate URL.
-// need to manual sent post request either using fetch or inside puppeteer.
-// this site use PHP, puppeteer seems unecessary, (not sure).
-// 
-// Ref Link: https://stackoverflow.com/questions/47060534/how-do-post-request-in-puppeteer
-//
-// TO DO:
-//  - change the flow of this script in crawl and crawlEachPages.
-//  - change the getHTML methods. new function: puppySearch(keyword); return html
-//  - if able to get HTML then other functions are reusable.
-// status: not yet start
-//
-// ============================================================================
+//also known as topics eg: 'Medicinal Chemistry' or 'biological chemistry'
+//join together can form a filter for the queries.
+const concepts = [
+  '291494', // medical chemistry
+  '292178', //organic compounds,
+  '290700', //biology
+  '292524', //peptides and proteins
+]
 
 const site = {
-  name: 'banglajol',
-  type: 'Bangladesh Journals',
-  baseURL: 'https://www.banglajol.info',
-  searchURL:'https://www.banglajol.info/index.php/index/search/search?query=',
+  name: 'acs_publication',
+  type: 'ACS Publication',
+  baseURL: 'https://pubs.acs.org',
+  searchURL:'https://pubs.acs.org/action/doSearch?AllField=',
   counts: 0,
   perPage:20,
   queries:{
-    page: '&searchPage=',
-    //limit: '&pageSize=',
-    //category: '&ConceptID=',
-    //sort: '&orderBy=Earliest&orderDir=',
+    page: '&startPage=',
+    limit: '&pageSize=',
+    category: '&ConceptID=',
+    sort: '&sortBy=Earliest',
   },
   selectors:{
-    results : 'div[class="cmp_pagination"]', //$(result).text(); 
-    page_link: 'div[class="title"] > a',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
-    title: 'h1[class="page_title"]', //$(title).text();
-    year:'div[class="item published"] > div[class="value"]', //$(year).attr('content');
+    results : 'span[class="result__count"]', //$(result).text(); 
+    page_link: 'h5[class="issue-item_title"] > a',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
+    title: 'span[class="hlFld-Title"]', //$(title).text();
+    year:'meta[name="dc.Date"]', //$(year).attr('content');
     link:'meta[name="prism.url"]',
-    abstract: 'div[class="item abstract"] > p',
+    abstract: 'div[id="abstractBox"] > p[class="articleBody_abstractText"]',
     abstract2: 'section[id="Abs1"] > p',
   }
 
 }
 
 site.crawl = async () => {
-  const promise =  await crawl();
-  console.log('Finished crawl');
+  const promise = await crawl();
+  console.log('Finished Crawling...');
   return promise;
-  //puppySearch('Herb');
 }
 
 // ------------- generate url to crawl ----------------------------------------------------
 const genURL = (searchTerms,n_page=1) =>{
-  const searchKey = searchTerms.replace(/ /g,'%20').replace(/:/g,'%3A').replace(/&/g,'%26');
-  const {page} = site.queries;
-  return site.searchURL+searchKey+page+n_page;
+  const searchKey = searchTerms.replace(/ /g,'+').replace(/:/g,'%3A').replace(/&/g,'%26');
+  const {page,limit,sort} = site.queries;
+  return site.searchURL+searchKey+page+n_page+sort+limit+20;
 }
 
 
-//puppySearch is a new function that will perform in browser post search instead of using url get request.
-//it will return a html, just like getHTML function
-const puppySearch = async (keyword) => {
-  const iPhone = await puppeteer.devices['iPhone 6'];
-  const browser = await puppeteer.launch({headless:false});
-  //const browser = await puppeteer.launch();
-  try{
-    const page = await browser.newPage();
-    const formData = {
-      'csrfToken': 'ed40c777d0985e9bda264d0fd990f9d9',
-      'query' : keyword,
-    };
-    await page.setRequestInterception(true);
-    page.once('request',request=>{
-      var data = {
-        'method':'POST',
-        'postData':querystring.stringify(formData),
-        'headers':{
-          ...request.headers(),
-          'Content-Type':'application/x-www-form-urlencoded',
-          'Origin':'https://www.banglajol.info',
-          'Referer':'https://www.banglajol.info/index.php/index/search/search'
-        }
-      };
-      request.continue(data);
-      page.setRequestInterception(false);
-    });
-    await page.goto(site.searchURL);
-    const response = await page.content();
-    //console.log('RESP:',response);
-    return response;
-
-  }catch(error){
-    console.error('Error In PuppySearch:',error);
-  }finally{
-    await browser.close();
-  }
-}
 // ------------ crawl and crawl eachpage is mostly not changing, depends on the page flow---
 
 const crawl = async () =>{
   for(let i = 0 ; i < keywords.length;){
     const key = keywords[i];
-    //console.log('KEY:',key);
     const url = genURL(key);
-    console.log('URL:',url);
     const html = await getHTML(url);
     if(html !== null){
       const result = getResultFromHTML(html);
@@ -138,23 +90,20 @@ const crawl = async () =>{
     i++;
   } 
   console.log('Finished with:',site.counts);
-  return Promise.resolve('Finished');
+  return Promise.resolve('Done');
 }
 
 const crawlEachPages = async ({pages},key) =>{
-  for(let i = 1; i < pages + 1;){
+  for(let i = 0; i < pages;){
     const url = genURL(key,i);
     console.log('URL:',url);
     const html = await getHTML(url);
     if(html !== null){
       const urls = getURLsFromHTML(html);
-      const n = 10 ; // change this 10 links per url_list;
-      const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_ =>urls.splice(0,n));
-      //console.log('URL_LIST:',url_list);
-      for (let i = 0; i < url_list.length;){
-        //const url_list = (i == 1) ? urls.slice(0,9) : urls.slice(10,19);
+      for (let i = 1; i <= 2;){
+        const url_list = (i == 1) ? urls.slice(0,9) : urls.slice(10,19);
         //console.log("URL_LIST:",url_list);   
-        const promises = await url_list[i].map(async function(url){
+        const promises = await url_list.map(async function(url){
         const html = await getHTML(url);//puppeteer have problem when open more than 10 windows, causing max eventlistener error.
         if(html !== null){
           const article = getArticleFromHTML(html,url);
@@ -188,7 +137,9 @@ const getArticleFromHTML = (html,url)=>{
       var abstracts = $(selectors.abstract).text() ;
       if(abstracts === "") abstracts = $(selectors.abstract2).text();
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.
-      const year = $(selectors.year).text();
+      const volume = $(selectors.year).attr('content');
+      const yrIndex = (volume) ? volume.search(regexYear) : null;
+      const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
       const type = site.type;
 
       //console.log('TITLE:',title);
@@ -221,8 +172,7 @@ const getURLsFromHTML = (html) => {
     const $ = cheerio.load(html,{normalizeWhitespace:true, xmlMode:true});
     const urls = $(page_link).map(function(i,el){
       const url = $(el).attr('href');
-      //return site.baseURL + url;
-      return url;
+      return site.baseURL + url;
     }).get();
     //console.log('URL_LIST:',urls);
     return urls;
@@ -236,12 +186,7 @@ const getResultFromHTML = (html) =>{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
     const results = $(site.selectors.results).first().text();
     if(results !== undefined){
-      console.log('RESULT IN:',results);
-      const tolRegx = /(?<=of) \d/g;
-      var total = results.slice(results.search(tolRegx),results.search(/(items)/g));
-      console.log('TOTAL:',total);
-      total = parseInt(total.replace(/,/g,''));
-      if(total === 0) throw new Error('No results found');
+      const total = parseInt(results.replace(/,/g,''));
       let pages = (Math.ceil(total/site.perPage));
       return {
         total,
@@ -260,7 +205,6 @@ const getResultFromHTML = (html) =>{
 
 
 // ------------ mostly unchanged code -----------------
-
 
 const getHTML = async (URL) => {
   const iPhone = puppeteer.devices['iPhone 6'];

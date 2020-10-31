@@ -8,74 +8,65 @@ const {mergeCollection} = require('./lib/mergedb');
 
 const app = {};
 
-app.init = async () => {
-  app.connection = {};
-  await mongoConnect(URI,process.env.MONGO_DB_NAME);
-  await mongoConnect(URI2,process.env.MONGO2_DB_NAME);
-  return 'MongoInit Completed';
+const init = async () => {
+  const connection = {};
+  try{
+    connection[process.env.MONGO_DB_NAME] = await mongoConnect(URI,process.env.MONGO_DB_NAME);
+    connection[process.env.MONGO2_DB_NAME] = await mongoConnect(URI2,process.env.MONGO2_DB_NAME);
+    console.log('Created connection');
+    return Promise.resolve(connection);
+  }catch(error){
+    return Promise.reject(error);
+  }
 }
 
 const mongoConnect = async (URI,connectionName) =>{
  try{
    const connection = await mongoose.createConnection(URI); 
-   app.connection[connectionName] = connection;
    console.log('Created Connection:',connectionName);
+   return Promise.resolve(connection);
  }catch(error){
-  console.error('Error Creating Connection:',error);
+    console.error('Error Creating Connection:',error);
+    return Promise.reject(error);
  } 
-
 }
 
 app.crawl = async () =>{ 
-  await Object.values(scripts).map(async function(site){
+  const con1 = app.connection[process.env.MONGO_DB_NAME];
+  const errors = [];
+ 
     try{
-      console.log('SITE:',site);
-      site.Model = con1.model(site.name,ArticleSchema);
-      console.log('Info:',site.info);
-      await site.crawl();
-      return Promise.resolve("Done"); 
+      for ( let i = 0; i < Object.values(scripts).length; ){
+        const site = Object.values(scripts)[i];
+        console.log('Crawling..:',site);
+        site.Model = con1.model(site.name,ArticleSchema);
+        await site.crawl();
+        i++;
+      }
     }catch(error){
-      //errorHandler,
-      errorHandler.scriptError(error);
-      //console.error('ScriptsError:',error);
-    }
-  });  
-  return Promise.resolve(1);
+      console.log('Error while crawling...');
+      errors.push(error);
+    }finally{
+      //await mergeCollection(app.connection); 
+      console.log('Done maybe .. ?');
+    } 
 }
 
-//app.mergeData = (collections) =>{
-  //try{
-    //collections.forEach(function(site){
-    //const crawlers = app.connection[process.env.MONGO_DB_NAME].model(site.name,ArticleSchema);
-    //crawlers.find({},'title link abstract category year').lean().exec(function(error,result){
-      //if(error) throw error;
-      //if(result){
-        ////copy content to new DB
-        //const newDb = app.connection[process.env.MONGO2_DB_NAME].model('crawled',ArticleSchema); //crawled is the collection name
-        //newDb.insertMany(result,{ordered:false},function(error,docs){
-          //if(error){
-            //console.error('Error while inserting into new db');
-          //}
-          //if(docs){
-            //console.log('Insert into new DB gracefully');
-          //}
-        //});
-        
-      //}
-    //})
-    ////console.log(model); 
-  //})
-  //}catch(error){
-    //console.log('Error Captured Here:',error);
-  //}
-//}
 
 app.run = async () =>{
-  await app.init();
-  mergeCollection(app.connection);
-
-  
- 
+  try{
+    app.connection = await init();
+    console.log('received connection..');
+    await app.crawl();
+    console.log('Finished crawling');
+    await mergeCollection(app.connection);
+  }catch(error){
+    console.error('We Found Error...');
+    console.error('Error are:',error);
+    //process.exit(1);
+  }finally{
+    process.exit(0);
+  } 
 }
 
 app.run();
