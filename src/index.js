@@ -5,6 +5,7 @@ const {URI,URI2} = require('./configs/mongo');
 const errorHandler = require('./lib/errorHandler');
 const ArticleSchema = require('./models/articles');
 const {mergeCollection} = require('./lib/mergedb');
+const _log = require('./lib/log');
 
 const app = {};
 
@@ -66,6 +67,14 @@ app.run = async () =>{
     console.error('Error are:',error);
     //process.exit(1);
   }finally{
+    const filename = 'finished';
+    const payload = JSON.stringify({status:'finished...',time: new Date()});
+    _log.append(filename,payload,function(error){
+      if(error){
+        console.log('Error wrinting logs');
+        process.exit(0);
+      }
+    });
     process.exit(0);
   } 
 }
