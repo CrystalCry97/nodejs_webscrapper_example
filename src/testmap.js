@@ -7,6 +7,8 @@ const ArticleSchema = require('./models/articles');
 const {mergeCollection} = require('./lib/mergedb');
 const _log = require('./lib/log');
 
+require('events').EventEmitter.setMaxListeners(100);
+
 const app = {};
 
 const init = async () => {

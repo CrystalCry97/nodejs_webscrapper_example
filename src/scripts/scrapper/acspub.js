@@ -119,7 +119,7 @@ const crawlEachPages = async ({pages},key) =>{
         });
         const articles = await Promise.all(promises); 
         //console.log('ARTICLE:',articles);
-        await insertDB(articles,site.Model,site.counts);
+        await insertDB(articles,site);
         i++;
       }
     }

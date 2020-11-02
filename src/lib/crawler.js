@@ -73,13 +73,13 @@ lib.getHTML = async (URL) => {
 }
 
 
-lib.insertDB = async (articles,Model,counts) => {
-   const Article = Model;
+lib.insertDB = async (articles,site) => {
+   const Article = site.Model;
    articles.map(function(article){
      if(article !== null){
        Article.create(article,function(error,result){
          if(error) lib.insertErrorHandler(error,article);
-         if(result) counts += 1;
+         if(result) site.counts += 1;
        });
      }
    });
