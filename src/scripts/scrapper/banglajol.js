@@ -66,9 +66,12 @@ const site = {
 }
 
 site.crawl = async () => {
-  const promise =  await crawl();
-  console.log('Finished crawl');
-  return promise;
+  try{
+      return await crawl();
+      console.log('Finished crawl');
+  }catch(error){
+    console.error('Error crawling:',site.name);
+  }
   //puppySearch('Herb');
 }
 
@@ -122,7 +125,7 @@ const crawlEachPages = async ({pages},key) =>{
         }
         });
         const articles = await Promise.all(promises); 
-        await insertDB(articles);
+        await insertDB(articles,site.Model,site.counts);
         i++;
       }
     }

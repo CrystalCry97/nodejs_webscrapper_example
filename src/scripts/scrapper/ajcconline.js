@@ -62,7 +62,11 @@ const site = {
 }
 
 site.crawl = async () => {
-  return await crawl();
+  try{
+    return await crawl();
+  }catch(error){
+    console.log('Error Crawling :',site.name);
+  }
 }
 
 // ------------- generate url to crawl ----------------------------------------------------
@@ -114,7 +118,7 @@ const crawlEachPages = async ({pages},key) =>{
         });
         const articles = await Promise.all(promises); 
         //console.log('ARTICLE:',articles);
-        await insertDB(articles);
+        await insertDB(articles,site.Model,site.counts);
         i++;
       }
     }
