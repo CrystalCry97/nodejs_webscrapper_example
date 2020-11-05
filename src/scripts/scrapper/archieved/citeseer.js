@@ -1,3 +1,4 @@
+
 const puppeteer     = require('puppeteer');
 const cheerio       = require('cheerio');
 const {promisify}   = require('util');
@@ -27,44 +28,54 @@ const keywords = [
   'ABC:ATP binding cassette transporter super family',
 ]
 
-
-//----------------------------------- MAIN CONFIG PART---------------------------
 const site = {
-  name: 'banglajol',
-  type: 'Bangladesh Journals',
-  baseURL: 'https://www.banglajol.info',
-  searchURL:'https://www.banglajol.info/index.php/index/search/search?query=',
+  name: 'citeseerx',
+  type: 'CiteSeerx',
+  baseURL: 'https://citeseerx.ist.psu.edu',
+  searchURL:'https://citeseerx.ist.psu.edu/search?q=',
   counts: 0,
   perPage:20,
   queries:{
-    page: '&searchPage=',
+    page: '&start=',
     //limit: '&pageSize=',
     //category: '&ConceptID=',
     //sort: '&orderBy=Earliest&orderDir=',
   },
   selectors:{
-    results : 'div[class="cmp_pagination"]', //$(result).text(); 
-    page_link: 'div[class="title"] > a',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
-    title: 'h1[class="page_title"]', //$(title).text();
-    year:'div[class="item published"] > div[class="value"]', //$(year).attr('content');
-    link:'meta[name="prism.url"]',
-    abstract: 'div[class="item abstract"] > p',
-    abstract2: 'section[id="Abs1"] > p',
+    results : 'div[id="result_info"]', //$(result).text(); 
+    page_link: 'div[class="result"] > h3 > a',
+    //title: 'meta[name="citation_title"]', //$(title).attr('content');
+    title:'div[id="viewHeader"] >h2',
+    year:'meta[name="DC.Date.dateSubmitted"]', //$(year).attr('content');
+    link:'meta[name="DC.url"]',
+    abstract: 'meta[name="description"]',
+    abstract2: 'div[id="abstract"] > p',
+
   }
 
 }
-//------------------------------------------------------------------------------
 
-//------------------- Generating URL to crawl ----------------------------------
+site.crawl = async () => {
+  try{
+    return await crawl();
+  }catch(error){
+    console.error('Error Crawling:',site.name);
+  }
+    //puppySearch('Herb');
+}
+
+// ------------- generate url to crawl ----------------------------------------------------
 const genURL = (searchTerms,n_page=1) =>{
-  const searchKey = searchTerms.replace(/ /g,'%20').replace(/:/g,'%3A').replace(/&/g,'%26');
+  //const searchKey = searchTerms.replace(/ /g,'%20').replace(/:/g,'%3A').replace(/&/g,'%26');
+  const searchKey = searchTerms.replace(/ /g,'+').replace(/:/g,'%3A').replace(/&/g,'%26'); 
   const {page} = site.queries;
   return site.searchURL+searchKey+page+n_page;
 }
-//------------------------------------------------------------------------------
+
 const crawl = async () =>{
   for(let i = 0 ; i < keywords.length;){
     const key = keywords[i];
+    console.log('KEY:',key);
     const url = genURL(key);
     console.log('URL:',url);
     const html = await getHTML(url);
@@ -77,54 +88,49 @@ const crawl = async () =>{
     i++;
   } 
   console.log('Finished with:',site.counts);
-  return Promise.resolve('Finished');
+  return Promise.resolve('Done');
 }
 
-// ------------------ Where Main Crawling function start ------------------------
-site.crawl = async () => {
-  try{
-    const promise = await crawl();
-    console.log('Finished Crawling...');
-    return promise;
-  }catch(error){
-    console.log('Error crawling:',site.name);
-  }
-}
-// -----------------------------------------------------------------------------
-
-// ----------------------- crawl each page to get raw html of the page---------
 const crawlEachPages = async ({pages},key) =>{
-  for(let i = 0; i < pages;){
+  for(let i = 0; i < pages + 1;){
+    sleep(10000);
     const url = genURL(key,i);
     console.log('URL:',url);
     const html = await getHTML(url);
     if(html !== null){
       const urls = getURLsFromHTML(html);
-      const n = 10 ; // urls per array;
-      const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_=>urls.splice(0,n)); // devide url list into arrays of size n;
-      // for or map ??
-      for( let x = 0; x < url_list.length;){
-        const promises = await url_list[x].map(async function(url){
-          const html = await getHTML(url);
-          if(html !== null){
-            const article = getArticleFromHTML(html,url);
-            return article;
-          }else{
-            return null;
-          }
+      //console.log('URLs Array:',urls);
+      const n = 10 ; // change this 10 links per url_list;
+      const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_ =>urls.splice(0,n));
+      console.log('URL_LIST:',url_list);
+      for (let i = 0; i < url_list.length;){
+        //const url_list = (i == 1) ? urls.slice(0,9) : urls.slice(10,19);
+        //console.log("URL_LIST:",url_list);   
+        const promises = await url_list[i].map(async function(url){
+        const html = await getHTML(url);//puppeteer have problem when open more than 10 windows, causing max eventlistener error.
+        if(html !== null){
+          const article = getArticleFromHTML(html,url);
+          console.log('ART:',article);
+          return article;
+        }else{
+          return null;
+        }
         });
-        const articles = await Promise.all(promises);
-        await insertDB(articles, site);
-        x++;
+        const articles = await Promise.all(promises); 
+        //console.log('ARTICLE:',articles);
+        await insertDB(articles,site);
+        i++;
       }
-   }
-    console.log(`${site.name}, inserted: ${site.counts}`); 
-    i++;
+    }
+    console.log('Inserted:',site.counts);
+    //i++;
+    i+=10;
   }
 }
-// ----------------------------------------------------------------------------
 
-// ------------- changing code ------------------------------------------------
+
+// ------------ part of code that mostly changing ----------
+
 const getArticleFromHTML = (html,url)=>{
   try{
     const {selectors} = site;
@@ -133,17 +139,22 @@ const getArticleFromHTML = (html,url)=>{
     const link = url;
     const title = $(selectors.title).text();
     if( typeof title === 'string' || title instanceof String){
-      var abstracts = $(selectors.abstract).text() ;
+      var abstracts = $(selectors.abstract).attr('content') ;
       if(abstracts === "") abstracts = $(selectors.abstract2).text();
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.
-      const year = $(selectors.year).text();
-      const category = site.type;
+      const year = $(selectors.year).attr('content');
+      const type = site.type;
+
+      //console.log('TITLE:',title);
+      //console.log('YEAR:',volume);
+      //console.log('LINK:',link);
+      //console.log('\nDESCRIPTION: ',abstracts);
       return {
         title,
         link,
         abstract: abstracts,
         year,
-        category,
+        type,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');
@@ -151,25 +162,29 @@ const getArticleFromHTML = (html,url)=>{
   }catch(error){
     console.error(error);
     return null;
+    //return null;
   }
   
 }
 
-// --------------- get URLs from html --------------------------------
+// ----------- get list of articles urls from the search result page -------------------------
+
 const getURLsFromHTML = (html) => {
   try{
     const {page_link} = site.selectors;
     const $ = cheerio.load(html,{normalizeWhitespace:true, xmlMode:true});
     const urls = $(page_link).map(function(i,el){
       const url = $(el).attr('href');
-      //return site.baseURL + url;
-      return url;
+      return site.baseURL + url;
+      //return url;
     }).get();
     //console.log('URL_LIST:',urls);
     return urls;
   }catch(error){}
 }
-// ------------- get result number -----------------------------------
+
+
+// ----------- get seach result count from the search result page -------------------------
 const getResultFromHTML = (html) =>{
   try{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
@@ -177,7 +192,7 @@ const getResultFromHTML = (html) =>{
     if(results !== undefined){
       console.log('RESULT IN:',results);
       const tolRegx = /(?<=of) \d/g;
-      var total = results.slice(results.search(tolRegx),results.search(/(items)/g));
+      var total = results.slice(results.search(tolRegx),-1);
       console.log('TOTAL:',total);
       total = parseInt(total.replace(/,/g,''));
       if(total === 0) throw new Error('No results found');
@@ -195,6 +210,5 @@ const getResultFromHTML = (html) =>{
     return null;
   }
 }
-//-----------------------------------------------------------------------------
 
 module.exports = site;

@@ -1,7 +1,7 @@
 const puppeteer     = require('puppeteer');
 const cheerio       = require('cheerio');
 const {promisify}   = require('util');
-const {getHTML,insertDB,insertErrorHandler,sleep,stripHtmlTags}       = require('../../lib/crawler');
+const {getHTML,insertDB,insertErrorHandler,sleep}       = require('../../lib/crawler');
 
 const keywords = [
   'Drug-herb',
@@ -27,39 +27,41 @@ const keywords = [
   'ABC:ATP binding cassette transporter super family',
 ]
 
-
-//------------------------- MAIN CHANGING CONFIG PART---------------------------
+//----------------------------------- MAIN CONFIG PART---------------------------
 const site = {
-  name: 'ajcc',
-  type: 'American Journal of Critical Care',
-  baseURL: 'https://aacnjournals.org',
-  searchURL:'https://aacnjournals.org/ajcconline/search-results?q=',
+  name: 'springer',
+  type: 'Springer Link',
+  baseURL:'https://link.springer.com',
+  searchURL:'https://link.springer.com/search/page/',
   counts: 0,
   perPage:20,
   queries:{
-    page: '&page=',
-    limit: '&pageSize=',
-    sort: '&sort=Date+-+Newest+First',
+    key:'?query=',
+    category: '&facet-discipline="Medicine+%26+Public+Health"',
+    sort: '&sortOrder=newestFirst',
   },
   selectors:{
-    results : 'div[class="sr-statistics"]', //$(result).text(); //need to do regex 
-    page_link: 'div[class="sri-title customLink al-title"] > h4 > a ',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
-    title: 'h1[class="wi-article-title article-title-main"]', //$(title).text();
-    year:'meta[name="citation_publication_date"]', //$(year).attr('content');
+    results : 'h1[id="number-of-search-results-and-search-terms"] > strong', //$(result).first().text(); 
+    page_link: 'a[class="title"]',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
+    title: 'h1[class="c-article-title"]', //$(title).text();
+    year:'meta[name="dc.date"]', //$(year).attr('content');
     link:'meta[name="prism.url"]',
-    abstract: 'div[data-widgetname="ArticleFulltext"]', //$(abstract).html(); then strip_html_tag
-    //abstract2: 'section[id="Abs1"] > p',
+    abstract: 'div[id="Abs1-content"] > p',
+    abstract2: 'section[id="Abs1"] > p',
   }
 
 }
+
+
 //------------------------------------------------------------------------------
 
 //------------------- Generating URL to crawl ----------------------------------
 const genURL = (searchTerms,n_page=1) =>{
   const searchKey = searchTerms.replace(/ /g,'+').replace(/:/g,'%3A').replace(/&/g,'%26');
-  const {page,limit,sort} = site.queries;
-  return site.searchURL+searchKey+page+n_page+sort+limit+20;
+  const {key,category,sort} = site.queries;
+  return site.searchURL+n_page+key+searchKey+category+sort;
 }
+
 //------------------------------------------------------------------------------
 
 // ------------------ Where Main Crawling function start ------------------------
@@ -73,12 +75,12 @@ site.crawl = async () => {
   }
 }
 // -----------------------------------------------------------------------------
-
 const crawl = async () =>{
   for(let i = 0 ; i < keywords.length;){
     const key = keywords[i];
+    console.log('KEY:',key);
     const url = genURL(key);
-    console.log('GEN_URL:',url);
+    console.log('URL:',url);
     const html = await getHTML(url);
     if(html !== null){
       const result = getResultFromHTML(html);
@@ -91,8 +93,6 @@ const crawl = async () =>{
   console.log('Finished with:',site.counts);
   return Promise.resolve('Done');
 }
-
-
 // ----------------------- crawl each page to get raw html of the page---------
 const crawlEachPages = async ({pages},key) =>{
   for(let i = 0; i < pages;){
@@ -117,10 +117,10 @@ const crawlEachPages = async ({pages},key) =>{
         const articles = await Promise.all(promises);
         await insertDB(articles, site);
         x++;
-      } 
-    }
-    console.log(`${site.name}, inserted: ${site.counts}`);
-    i++;
+      }
+   }
+    console.log(`${site.name},inserted: ${site.counts}`);
+    i+=10;
   }
 }
 // ----------------------------------------------------------------------------
@@ -135,21 +135,19 @@ const getArticleFromHTML = (html,url)=>{
     const title = $(selectors.title).text();
     if( typeof title === 'string' || title instanceof String){
       var abstracts = $(selectors.abstract).text() ;
-      //console.log('\nABSTRACT:',abstracts);
-      abstracts = stripHtmlTags(abstracts);
-      //if(abstracts === "") abstracts = $(selectors.abstract2).text();
+      if(abstracts === "") abstracts = $(selectors.abstract2).text();
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.
       const volume = $(selectors.year).attr('content');
       const yrIndex = (volume) ? volume.search(regexYear) : null;
       const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
-      const category = site.type;
+      const type = site.type;
 
       return {
         title,
         link,
-        abstract: (abstracts)? abstracts : null ,
+        abstract: abstracts,
         year,
-        category,
+        category: type,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');
@@ -157,10 +155,10 @@ const getArticleFromHTML = (html,url)=>{
   }catch(error){
     console.error(error);
     return null;
-    //return null;
   }
   
 }
+
 // --------------- get URLs from html --------------------------------
 const getURLsFromHTML = (html) => {
   try{
@@ -181,12 +179,7 @@ const getResultFromHTML = (html) =>{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
     const results = $(site.selectors.results).first().text();
     if(results !== undefined){
-      //console.error(' //need to add regex here for total'); 
-      console.log('RESULT:',results);
-      const totalRegex = /(?<=of) \d/g;
-      var total = results.slice(results.search(totalRegex),results.search(/(Search)/g)); 
-      console.log('TOTAL:',total);
-      total = parseInt(total.replace(/,/g,''));
+      const total = parseInt(results.replace(/,/g,''));
       let pages = (Math.ceil(total/site.perPage));
       return {
         total,

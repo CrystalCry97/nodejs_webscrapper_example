@@ -4,8 +4,10 @@ const scripts = {};
 
 const folderPath = path.join(__dirname,'scrapper');
 require('fs').readdirSync(folderPath).forEach(function(file){
-  const name = file.replace('.js',''); 
-  scripts[name] = require('./scrapper/'+file);
+  if(file.match(/\.js$/) !== null ){
+    const name = file.replace('.js',''); 
+    scripts[name] = require('./scrapper/'+file);
+  }
 
 });
 

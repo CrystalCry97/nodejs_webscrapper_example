@@ -27,15 +27,8 @@ const keywords = [
   'ABC:ATP binding cassette transporter super family',
 ]
 
-//also known as topics eg: 'Medicinal Chemistry' or 'biological chemistry'
-//join together can form a filter for the queries.
-const concepts = [
-  '291494', // medical chemistry
-  '292178', //organic compounds,
-  '290700', //biology
-  '292524', //peptides and proteins
-]
 
+//----------------------------------- MAIN CONFIG PART---------------------------
 const site = {
   name: 'acs_publication',
   type: 'ACS Publication',
@@ -60,7 +53,17 @@ const site = {
   }
 
 }
+//------------------------------------------------------------------------------
 
+//------------------- Generating URL to crawl ----------------------------------
+const genURL = (searchTerms,n_page=1) =>{
+  const searchKey = searchTerms.replace(/ /g,'+').replace(/:/g,'%3A').replace(/&/g,'%26');
+  const {page,limit,sort} = site.queries;
+  return site.searchURL+searchKey+page+n_page+sort+limit+20;
+}
+//------------------------------------------------------------------------------
+
+// ------------------ Where Main Crawling function start ------------------------
 site.crawl = async () => {
   try{
     const promise = await crawl();
@@ -70,16 +73,7 @@ site.crawl = async () => {
     console.log('Error crawling:',site.name);
   }
 }
-
-// ------------- generate url to crawl ----------------------------------------------------
-const genURL = (searchTerms,n_page=1) =>{
-  const searchKey = searchTerms.replace(/ /g,'+').replace(/:/g,'%3A').replace(/&/g,'%26');
-  const {page,limit,sort} = site.queries;
-  return site.searchURL+searchKey+page+n_page+sort+limit+20;
-}
-
-
-// ------------ crawl and crawl eachpage is mostly not changing, depends on the page flow---
+// -----------------------------------------------------------------------------
 
 const crawl = async () =>{
   for(let i = 0 ; i < keywords.length;){
@@ -98,6 +92,7 @@ const crawl = async () =>{
   return Promise.resolve('Done');
 }
 
+// ----------------------- crawl each page to get raw html of the page---------
 const crawlEachPages = async ({pages},key) =>{
   for(let i = 0; i < pages;){
     const url = genURL(key,i);
@@ -105,32 +100,32 @@ const crawlEachPages = async ({pages},key) =>{
     const html = await getHTML(url);
     if(html !== null){
       const urls = getURLsFromHTML(html);
-      for (let i = 1; i <= 2;){
-        const url_list = (i == 1) ? urls.slice(0,9) : urls.slice(10,19);
-        //console.log("URL_LIST:",url_list);   
-        const promises = await url_list.map(async function(url){
-        const html = await getHTML(url);//puppeteer have problem when open more than 10 windows, causing max eventlistener error.
-        if(html !== null){
-          const article = getArticleFromHTML(html,url);
-          return article;
-        }else{
-          return null;
-        }
+      const n = 10 ; // urls per array;
+      const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_=>urls.splice(0,n)); // devide url list into arrays of size n;
+      // for or map ??
+      for( let x = 0; x < url_list.length;){
+        const promises = await url_list[x].map(async function(url){
+          const html = await getHTML(url);
+          if(html !== null){
+            const article = getArticleFromHTML(html,url);
+            return article;
+          }else{
+            return null;
+          }
         });
-        const articles = await Promise.all(promises); 
-        //console.log('ARTICLE:',articles);
-        await insertDB(articles,site);
-        i++;
+        const articles = await Promise.all(promises);
+        await insertDB(articles, site);
+        x++;
       }
+
     }
-    console.log('Inserted:',site.counts);
+    console.log(`${site.name} inserted: ${site.counts}`);
     i++;
   }
 }
+// ----------------------------------------------------------------------------
 
-
-// ------------ part of code that mostly changing ----------
-
+// ------------- changing code ------------------------------------------------
 const getArticleFromHTML = (html,url)=>{
   try{
     const {selectors} = site;
@@ -145,14 +140,14 @@ const getArticleFromHTML = (html,url)=>{
       const volume = $(selectors.year).attr('content');
       const yrIndex = (volume) ? volume.search(regexYear) : null;
       const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
-      const type = site.type;
+      const category = site.type;
 
       return {
         title,
         link,
         abstract: abstracts,
         year,
-        type,
+        category,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');
@@ -160,12 +155,11 @@ const getArticleFromHTML = (html,url)=>{
   }catch(error){
     console.error(error);
     return null;
-  }
-  
+  } 
 }
 
-// ----------- get list of articles urls from the search result page -------------------------
 
+// --------------- get URLs from html --------------------------------
 const getURLsFromHTML = (html) => {
   try{
     const {page_link} = site.selectors;
@@ -179,7 +173,7 @@ const getURLsFromHTML = (html) => {
 }
 
 
-// ----------- get seach result count from the search result page -------------------------
+// ------------- get result number -----------------------------------
 const getResultFromHTML = (html) =>{
   try{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
@@ -201,5 +195,6 @@ const getResultFromHTML = (html) =>{
   }
 }
 
+//-----------------------------------------------------------------------------
 
 module.exports = site;

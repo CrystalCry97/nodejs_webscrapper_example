@@ -7,7 +7,8 @@ const ArticleSchema = require('./models/articles');
 const {mergeCollection} = require('./lib/mergedb');
 const _log = require('./lib/log');
 
-require('events').EventEmitter.setMaxListeners(100);
+//require('events').EventEmitter.setMaxListeners(100);
+require('events').EventEmitter.defaultMaxListeners = 50;
 
 const app = {};
 
@@ -85,10 +86,12 @@ app.run = async () =>{
     _log.append(filename,payload,function(error){
       if(error){
         console.log('Error wrinting logs');
+        process.exit(1);
+      }else{
         process.exit(0);
       }
     });
-    process.exit(0);
+    //process.exit(0);
   } 
 }
 

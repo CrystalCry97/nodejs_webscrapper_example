@@ -1,4 +1,3 @@
-
 const puppeteer     = require('puppeteer');
 const cheerio       = require('cheerio');
 const {promisify}   = require('util');
@@ -28,21 +27,8 @@ const keywords = [
   'ABC:ATP binding cassette transporter super family',
 ]
 
-// ========================= KIV ==============================================
-// this site use post request, so there is no ways for us to manipulate URL.
-// need to manual sent post request either using fetch or inside puppeteer.
-// this site use PHP, puppeteer seems unecessary, (not sure).
-// 
-// Ref Link: https://stackoverflow.com/questions/47060534/how-do-post-request-in-puppeteer
-//
-// TO DO:
-//  - change the flow of this script in crawl and crawlEachPages.
-//  - change the getHTML methods. new function: puppySearch(keyword); return html
-//  - if able to get HTML then other functions are reusable.
-// status: not yet start
-//
-// ============================================================================
 
+//----------------------------------- MAIN CONFIG PART---------------------------
 const site = {
   name: 'greenpharmacy',
   type: 'International Journal of Green Pharmacy',
@@ -52,9 +38,6 @@ const site = {
   perPage:20,
   queries:{
     page: '&searchPage=',
-    //limit: '&pageSize=',
-    //category: '&ConceptID=',
-    //sort: '&orderBy=Earliest&orderDir=',
   },
   selectors:{
     results : '.listing tr:last-child', //$(result).text(); 
@@ -69,23 +52,29 @@ const site = {
 
 }
 
-site.crawl = async () => {
-  try{
-    return await crawl();
-  }catch(error){
-    console.error('Error Crawling:',site.name);
-  }
-    //puppySearch('Herb');
-}
 
-// ------------- generate url to crawl ----------------------------------------------------
+//------------------------------------------------------------------------------
+
+//------------------- Generating URL to crawl ----------------------------------
 const genURL = (searchTerms,n_page=1) =>{
   //const searchKey = searchTerms.replace(/ /g,'%20').replace(/:/g,'%3A').replace(/&/g,'%26');
   const searchKey = searchTerms.replace(/ /g,'+').replace(/:/g,'%3A').replace(/&/g,'%26'); 
   const {page} = site.queries;
   return site.searchURL+searchKey+page+n_page;
 }
-// ------------ crawl and crawl eachpage is mostly not changing, depends on the page flow---
+//------------------------------------------------------------------------------
+
+// ------------------ Where Main Crawling function start ------------------------
+site.crawl = async () => {
+  try{
+    const promise = await crawl();
+    console.log('Finished Crawling...');
+    return promise;
+  }catch(error){
+    console.log('Error crawling:',site.name);
+  }
+}
+// -----------------------------------------------------------------------------
 
 const crawl = async () =>{
   for(let i = 0 ; i < keywords.length;){
@@ -105,44 +94,40 @@ const crawl = async () =>{
   console.log('Finished with:',site.counts);
   return Promise.resolve('Done');
 }
-
+//----------------------------------------------------------------------------------
+// ----------------------- crawl each page to get raw html of the page---------
 const crawlEachPages = async ({pages},key) =>{
-  for(let i = 1; i < pages + 1;){
+  for(let i = 0; i < pages;){
     const url = genURL(key,i);
     console.log('URL:',url);
     const html = await getHTML(url);
     if(html !== null){
       const urls = getURLsFromHTML(html);
-      const n = 10 ; // change this 10 links per url_list;
-      const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_ =>urls.splice(0,n));
-      console.log('URL_LIST:',url_list);
-      for (let i = 0; i < url_list.length;){
-        //const url_list = (i == 1) ? urls.slice(0,9) : urls.slice(10,19);
-        //console.log("URL_LIST:",url_list);   
-        const promises = await url_list[i].map(async function(url){
-        const html = await getHTML(url);//puppeteer have problem when open more than 10 windows, causing max eventlistener error.
-        if(html !== null){
-          const article = getArticleFromHTML(html,url);
-          console.log('ART:',article);
-          return article;
-        }else{
-          return null;
-        }
+      const n = 10 ; // urls per array;
+      const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_=>urls.splice(0,n)); // devide url list into arrays of size n;
+      // for or map ??
+      for( let x = 0; x < url_list.length;){
+        const promises = await url_list[x].map(async function(url){
+          const html = await getHTML(url);
+          if(html !== null){
+            const article = getArticleFromHTML(html,url);
+            return article;
+          }else{
+            return null;
+          }
         });
-        const articles = await Promise.all(promises); 
-        //console.log('ARTICLE:',articles);
-        await insertDB(articles,site);
-        i++;
+        const articles = await Promise.all(promises);
+        await insertDB(articles, site);
+        x++;
       }
-    }
-    console.log('Inserted:',site.counts);
+   }
+    console.log(`${site.name}, inserted: ${site.counts}`)
     i++;
   }
 }
+// ----------------------------------------------------------------------------
 
-
-// ------------ part of code that mostly changing ----------
-
+// ------------- changing code ------------------------------------------------
 const getArticleFromHTML = (html,url)=>{
   try{
     const {selectors} = site;
@@ -166,7 +151,7 @@ const getArticleFromHTML = (html,url)=>{
         link,
         abstract: abstracts,
         year,
-        type,
+        category: type,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');
@@ -179,8 +164,7 @@ const getArticleFromHTML = (html,url)=>{
   
 }
 
-// ----------- get list of articles urls from the search result page -------------------------
-
+// --------------- get URLs from html --------------------------------
 const getURLsFromHTML = (html) => {
   try{
     const {page_link} = site.selectors;
@@ -194,9 +178,7 @@ const getURLsFromHTML = (html) => {
     return urls;
   }catch(error){}
 }
-
-
-// ----------- get seach result count from the search result page -------------------------
+// ------------- get result number -----------------------------------
 const getResultFromHTML = (html) =>{
   try{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
@@ -222,5 +204,8 @@ const getResultFromHTML = (html) =>{
     return null;
   }
 }
+
+
+//-----------------------------------------------------------------------------
 
 module.exports = site;

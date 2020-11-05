@@ -96,5 +96,13 @@ lib.insertErrorHandler = (error,article) => {
   }
 }
 
+lib.stripHtmlTags = (str) =>{
+  if((str==null) || (str === '')){
+    return false;
+  }else{
+    var str = str.toString();
+    return str.replace(/<[^>]*>/g,'');
+  }
+}
 
 module.exports = lib;
