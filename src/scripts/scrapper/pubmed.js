@@ -1,7 +1,8 @@
-const puppeteer = require('puppeteer');
-const axios = require('axios');
-const {promisify} = require('util');
-const cheerio = require('cheerio');
+
+const puppeteer     = require('puppeteer');
+const cheerio       = require('cheerio');
+const {promisify}   = require('util');
+const {getHTML,insertDB,insertErrorHandler,sleep}       = require('../../lib/crawler');
 
 const keywords = [
   'Drug-herb interactions',
@@ -24,13 +25,15 @@ const keywords = [
   'ABC:ATP binding',
   'ABC:ATP binding cassette transporter super family',
 
-
 ]
 
-const pubmed = {
+const site = {
   name: 'pubmed',
-  baseURL : 'https://pubmed.ncbi.nlm.nih.gov/',
+  type: 'PubMed.gov', 
+  baseURL : 'https://pubmed.ncbi.nlm.nih.gov',
   searchURl: 'https://pubmed.ncbi.nlm.nih.gov/?term=',
+  counts: 0,
+  perPage: 10,
   queries: {
     sort: '&sort=date',
     page: '&page=',
@@ -47,6 +50,8 @@ const pubmed = {
     ],
   },
   selectors: {
+    page_link: 'div.docsum-content > a.docsum-title',
+    results : 'div[class="results-amount"]> span[class="value"]',
     articles : 'div.results-article',
     year: 'time.citation-year',
     title: 'h1.heading-title > a',
@@ -56,148 +61,137 @@ const pubmed = {
   }
 }
 
-pubmed.crawl = async () => {
-  //const URL_LIST = 
-  await crawl();
-  //const article = await scrap(URL_LIST);
+// ----------------------------- generate search URL -----------------------------------------
+const genURL = (searchTerms,n_page=1) =>{
+  const {publication} = site.queries;
+  const pub = publication.join('');
+  const searchKey = searchTerms.replace(/ /g,'%20').replace(/:/g,'%3A');
+  const {page,sort,years,format} = site.queries;
+  return site.searchURl+searchKey+pub+years+format+sort+page+n_page;
 }
 
-const crawl = async() =>{
- 
-  const {publication} = pubmed.queries; 
-  const pub = publication.join('');
-  for(let i = 0; i < keywords.length ; ){
-    const key = keywords[i].replace(/ /g,'%20').replace(/:/g,'%3A');
-    const url = genURL(key,1,pub);
-    console.log('URL:',url);
-    const html = await getHTML(url); 
-    if(html && (html !== null)){
-      const searchRes = getResultFromHTML(html);
-      console.log('RES:',searchRes);
-      await crawlEachPages(searchRes,key,pub);
-    }
-  i++;
+//---------------------------------------------------------------------------------------------
+
+//-------------------------------Naub Crawling function start ---------------------------------
+site.crawl = async () =>{
+  try{
+    return await crawl();
+  }catch(error){
+    console.error(error);
   }
 }
+//---------------------------------------------------------------------------------------------
 
-const crawlEachPages = async ({pages},key,pub) =>{
-  for(let i = 1; i < pages ; ) {
-    const url = genURL(key,i,pub);
-    console.log('\nNEW_URL:',url);
+const crawl = async () => {
+  for(let i = 0; i < keywords.length;){
+    const key = keywords[i];
+    const url = genURL(key);
     const html = await getHTML(url);
-    if(html && (html !== null)){
-      const articles = getArticlesFromHtml(html);
-      //console.log('ARticles:',articles);
-      await insertDB(articles);
+    if(html !== null){
+      const result = getResultFromHTML(html);
+      await crawlEachPages(result,key);
+    }
+    i++;
+  }
+  console.log(`Finished ${site.name}: ${site.counts}`);
+  return Promise.resolve('Done');
+}
+
+//------------------------- crawl Each page --------------------------------------------------
+const crawlEachPages = async ({pages},key) =>{
+  for(let i = 0; i < pages;){
+    const url = genURL(key,i);
+    const html = await getHTML(url);
+    if(html !== null){
+      const urls = getURLsFromHTML(html);
+      const n = 10; // urls per array.
+      const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_=>urls.splice(0,n)); //devide urls into list of urls
+      // should I use for or map ?
+      for(let x = 0; x < url_list.length;){
+        const promises = await url_list[x].map(async function(url){
+          const html = await getHTML(url);
+          if(html !== null){
+            return getArticleFromHTML(html,url);
+          }else{
+            return null;
+          }
+        });
+        const articles = await Promise.all(promises);
+        await insertDB(articles,site);
+        x++;
+      }
     }
     i++;
   }
 }
-
-const insertDB = async (articles) => {
-  const Article = pubmed.Model;
-  articles.map(function(article){
-    Article.create(article,function(err,results){
-      if(err) {
-        //console.error(err) 
-        //console.log('\n\nProblematic:=>',article);
-        insertErrorHandler(err,article);
-      }
-      //else{
-        ////if(results) {
-          ////console.log('Created:',results.title)
-       ////}
-      //}
-    })  
-  })
-}
-const getArticlesFromHtml = (html) => {
+//--------------------------------------------------------------------------------------------
+//--------------------- GET article attributes from HTML --------------------------------------
+const getArticleFromHTML = (html,link) => {
   try{
-    const {selectors} = pubmed;
+    const {selectors} = site;
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
-    //console.log('SELECTORS:',selectors.articles);
-    const articles = $(selectors.articles).map(function(index,el){
-      const title = $(el).find(selectors.title).first().text();
-      const link = pubmed.baseURL + $(el).find(selectors.title).first().attr('href');
-      const abstract = $(el).find(selectors.abstracts).text();
-      var year = $(el).find(selectors.year).text();
-      //year = (year && year !== undefined) ? year.slice(0,4) : null; 
+    
+    //------ get title
+    let title = $(selectors.title).first().text();
+    title = title.trim().substr(0,255);
+    
+    //------ get description.
+    if(typeof title == 'string' || title instanceof String){
+      let abstracts = $(selectors.abstracts).first().text();
+      let year = $(selectors.year).text();
+
       return {
         title,
         link,
-        abstract,
-        year
-      };
-    }).get(); 
-    return articles;
-  }catch(err){
-    console.error(err);
-  }
-}
+        abstracts,
+        year,
+        category : site.type,
+      }
+    }else{
+      throw new Error('Missing title for an article');
+    }
 
-const getHTML = async (URL) => {
-  
-  //const browser = await puppeteer.launch({headless:false});
-  const browser = await puppeteer.launch(); // use headless:false to show chrome.
-  try{
-    const page = await browser.newPage();
-    await page.goto(URL);
-    const html = await page.content();
-    //await browser.close();
-    return html;
-  }catch(err){
-    console.error(err);
+  }catch(error){
+    console.error(error);
     return null;
-    //await browser.close();
-  }finally{
-    await browser.close();
   }
-    
-  
+}
+//--------------------------------------------------------------------------------------------
+// -------------------------- get URL from HTML ----------------------------------------------
+const getURLsFromHTML = (html) =>{
+  try{
+    const {page_link} = site.selectors;
+    const $ = cheerio.load(html,{normalizeWhitespace:true, xmlMode:true});
+    const urls = $(page_link).map(function(i,el){
+      const url = $(el).attr('href');
+      return site.baseURL+url;
+    }).get();
+    return urls;
+  }catch(error){
+    console.error(error);
+    return null;
+  }
 }
 
-const getResultFromHTML = (rawhtml) => {
+
+const getResultFromHTML = (html) =>{
   try{
-    const $ = cheerio.load(rawhtml,{normalizeWhitespace:true,xmlMode:true});
-    const results = $(pubmed.selectors.results).first().text();
-    if(results && (results !== undefined)){
-      //console.log('\nRESult=>',results);
+    const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
+    const results = $(site.selectors.results).first().text();
+    if(results !== undefined){
       const total = parseInt(results.replace(/,/g,''));
-      let pages = (Math.ceil(total/10)+1);
-      pages = ( pages <= 1000) ? pages : 1000 ; 
+      const pages = (Math.ceil(total/site.perPage));
       return {
         total,
-        pages
+        pages,
       }
+    }else{
+      throw new Error('No Search Result...');
     }
-    else{
-      console.log('Bad Result:');
-    }
-  }catch(err){
-    console.error(err);
+  }catch(error){
+    console.error(error);
+    return null;
   }
 }
-
-const genURL = (searchTerms,n_page=1,publication) =>{
-  const {years,page,format,sort} = pubmed.queries;
-  return pubmed.searchURl+searchTerms+publication+years+format+sort+page+n_page;
-}
-
-const sleep = promisify(setTimeout);
-
-const insertErrorHandler = (err,article) => {
-  if(err.name == 'MongoError' && err.code === 11000){
-    console.error('Dulicate Key Error:',article.link);
-  }
-  if(err.name == 'ValidationError'){
-    console.error('\n\n Validation Error:',article.link);
-    //assert.equal(err.errors['abstract'].message, 'Articles got no abstract');
-    //assert.equal(err.errors['title'].message,' No title');
-  }
-  //else{
-    //console.error(err);
-  //}
-}
-
-module.exports = pubmed;
+// -------------------------------------------------------------------------------------------
 
