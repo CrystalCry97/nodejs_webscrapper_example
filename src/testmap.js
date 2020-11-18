@@ -48,6 +48,7 @@ app.crawl = async () =>{
         }catch(error){
           //doing comething with error;
           console.log('Adoiiiii...');
+          console.error(error);
         }
            
       }));

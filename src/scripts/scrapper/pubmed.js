@@ -50,11 +50,13 @@ const site = {
     ],
   },
   selectors: {
-    page_link: 'div.docsum-content > a.docsum-title',
+    //page_link: 'div.docsum-content > a.docsum-title',
+    page_link: 'h1.heading-title > a',
     results : 'div[class="results-amount"]> span[class="value"]',
     articles : 'div.results-article',
-    year: 'time.citation-year',
-    title: 'h1.heading-title > a',
+    //year: 'time.citation-year',
+    year: 'meta[name="citation_date"]',
+    title: 'h1.heading-title',
     abstracts : 'div.abstract-content',
     link: 'div.full-text-links-list > a.link-item',
     results: 'div.results-amount > span.value',
@@ -86,6 +88,7 @@ const crawl = async () => {
   for(let i = 0; i < keywords.length;){
     const key = keywords[i];
     const url = genURL(key);
+    //console.log('FIRST:',url);
     const html = await getHTML(url);
     if(html !== null){
       const result = getResultFromHTML(html);
@@ -106,6 +109,7 @@ const crawlEachPages = async ({pages},key) =>{
       const urls = getURLsFromHTML(html);
       const n = 10; // urls per array.
       const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_=>urls.splice(0,n)); //devide urls into list of urls
+      //console.log('URLs:',url_list);
       // should I use for or map ?
       for(let x = 0; x < url_list.length;){
         const promises = await url_list[x].map(async function(url){
@@ -117,7 +121,8 @@ const crawlEachPages = async ({pages},key) =>{
           }
         });
         const articles = await Promise.all(promises);
-        await insertDB(articles,site);
+        console.log('Inserting...',articles);
+        //await insertDB(articles,site);
         x++;
       }
     }
@@ -137,13 +142,13 @@ const getArticleFromHTML = (html,link) => {
     
     //------ get description.
     if(typeof title == 'string' || title instanceof String){
-      let abstracts = $(selectors.abstracts).first().text();
-      let year = $(selectors.year).text();
+      let abstract = $(selectors.abstracts).first().text();
+      let year = $(selectors.year).attr('content');
 
       return {
         title,
         link,
-        abstracts,
+        abstract,
         year,
         category : site.type,
       }
@@ -164,6 +169,7 @@ const getURLsFromHTML = (html) =>{
     const $ = cheerio.load(html,{normalizeWhitespace:true, xmlMode:true});
     const urls = $(page_link).map(function(i,el){
       const url = $(el).attr('href');
+      console.log('URL:',url);
       return site.baseURL+url;
     }).get();
     return urls;
@@ -194,4 +200,4 @@ const getResultFromHTML = (html) =>{
   }
 }
 // -------------------------------------------------------------------------------------------
-
+module.exports = site;
