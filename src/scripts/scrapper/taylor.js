@@ -54,8 +54,12 @@ const taylor = {
   },
 }
 
-taylor.crawl = () => {
-  crawl();
+taylor.crawl = async () => {
+try{
+  return await crawl();
+}catch(error){
+	console.error(error);
+}
 }
 
 const crawl = async () => {
@@ -130,7 +134,7 @@ const getArticleFromHTML = (html)=>{
       link,
       abstract: abstracts,
       year,
-      type,
+      category: type,
     } 
   }catch(error){
     console.error(error);
@@ -152,7 +156,10 @@ const getURLsFromHTML = (html) => {
 const getHTML = async (URL) => {
   const iPhone = puppeteer.devices['iPhone 6'];
   //const browser = await puppeteer.launch({headless:false});
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+	headless:true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
   try{
     const page = await browser.newPage();
     await page.emulate(iPhone);

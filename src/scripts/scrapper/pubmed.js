@@ -49,16 +49,15 @@ const site = {
       '&filter=pubt.systematicreview'
     ],
   },
-  selectors: {
-    page_link: 'div.docsum-content > a.docsum-title',
-    results : 'div[class="results-amount"]> span[class="value"]',
-    articles : 'div.results-article',
-    year: 'time.citation-year',
-    title: 'h1.heading-title > a',
-    abstracts : 'div.abstract-content',
-    link: 'div.full-text-links-list > a.link-item',
+selectors: {
+    page_link: 'h1.heading-title > a',
     results: 'div.results-amount > span.value',
-  }
+    articles: 'div.results-article',
+    year: 'meta[name="citation_date"]',
+    title: 'h1.heading-title',
+    abstracts: 'div.abstract-content',
+    link: 'div.full-text-links-list > a.link-item'
+  },  
 }
 
 // ----------------------------- generate search URL -----------------------------------------
@@ -117,6 +116,7 @@ const crawlEachPages = async ({pages},key) =>{
           }
         });
         const articles = await Promise.all(promises);
+	//console.log('Inserting..',articles);
         await insertDB(articles,site);
         x++;
       }
@@ -137,13 +137,13 @@ const getArticleFromHTML = (html,link) => {
     
     //------ get description.
     if(typeof title == 'string' || title instanceof String){
-      let abstracts = $(selectors.abstracts).first().text();
-      let year = $(selectors.year).text();
+      let abstract = $(selectors.abstracts).first().text();
+      let year = $(selectors.year).attr('content');
 
       return {
         title,
         link,
-        abstracts,
+        abstract,
         year,
         category : site.type,
       }
@@ -194,4 +194,4 @@ const getResultFromHTML = (html) =>{
   }
 }
 // -------------------------------------------------------------------------------------------
-
+module.exports = site;

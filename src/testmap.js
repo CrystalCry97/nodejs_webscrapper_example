@@ -8,7 +8,7 @@ const {mergeCollection} = require('./lib/mergedb');
 const _log = require('./lib/log');
 
 //require('events').EventEmitter.setMaxListeners(100);
-require('events').EventEmitter.defaultMaxListeners = 50;
+require('events').EventEmitter.defaultMaxListeners = 65;
 
 const app = {};
 

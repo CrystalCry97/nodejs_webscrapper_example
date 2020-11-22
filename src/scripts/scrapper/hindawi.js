@@ -93,7 +93,11 @@ const hindawi = {
 }
 
 hindawi.crawl = async () =>{
+try{
   return await crawl();
+}catch(error){
+	console.error(error);
+}
 }
 
 const crawl = async () =>{
@@ -166,7 +170,7 @@ const cleanData = (article) => {
   return {
     title: article.title[0].content,
     abstract: article.description[0].content,
-    type: article['dc.publisher'][0].content,
+    category: 'Hindawi',
     year: article.citation_year[0].content,
   }
 }
@@ -186,7 +190,11 @@ const insertDB = async (articles) => {
 
 const getHTML = async (URL) => {
   //const browser = await puppeteer.launch({headless:false});
-  const browser = await puppeteer.launch();
+  //const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+	headless:true,
+	args:['--no-sandbox','--disable-setuid-sandbox'],
+  });
   try{
     const page = await browser.newPage();
     await page.goto(URL);
