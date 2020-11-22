@@ -44,7 +44,7 @@ const site = {
     page_link: 'div[class="result"] > h3 > a',
     title:'div[id="viewHeader"] >h2',
     year:'meta[name="DC.Date.dateSubmitted"]', //$(year).attr('content');
-    link:'meta[name="DC.url"]',
+    link:'ul#clinks >li > a',
     abstract: 'meta[name="description"]',
     abstract2: 'div[id="abstract"] > p',
 
@@ -131,7 +131,11 @@ const getArticleFromHTML = (html,url)=>{
     const {selectors} = site;
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
     //const link = $(selectors.link).attr('content');
-    const link = url;
+    const url = $(selectors.link).attr('href');
+    if(url !== undefined && typeof url === 'string')
+    {
+      const link = site.baseURL + url;
+    }  
     const title = $(selectors.title).text();
     if( typeof title === 'string' || title instanceof String){
       var abstracts = $(selectors.abstract).attr('content') ;

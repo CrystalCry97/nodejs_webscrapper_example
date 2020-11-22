@@ -105,4 +105,23 @@ lib.stripHtmlTags = (str) =>{
   }
 }
 
+lib.trimText = (text,n) =>{
+	let trimmed = text.trim();
+  trimmed = trimmed.replace(/<[^>]*>?/gm,'');
+	trimmed = (trimmed.length < n+3) ? trimmed : trimmed.substr(n) + '...';
+	return trimmed;
+};
+
+lib.validTitle = (text) => {
+  const datebr = /\((\d{4})*\)/g //check if a date in bracket eg: (2030)
+  const date = /^\d{4}$/gm // only start with 4 digits and ends with it with no other text, eg: 2020 
+  const nullspace = /\&nbsp\;?/g // only the string '&nbsp' with or without `;`.
+  const inJapan = /\[((title\s)?in Japanese)\]/gi
+}
+
+lib.filterText = (text,callback) => {
+  //do something to check if string match regex.
+  //then execute callback.
+  
+}
 module.exports = lib;
