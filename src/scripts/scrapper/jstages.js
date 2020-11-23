@@ -50,6 +50,7 @@ const site = {
     page_link: 'div[class="searchlist-title"] > a',
     //title: 'meta[name="citation_title"]', //$(title).attr('content');
     title:'div[class="global-article-title"]',
+    subtitle: 'meta[name="subtitle"]',
     year:'meta[name="citation_publication_date"]', //$(year).attr('content');
     link:'meta[name="citation_pdf_url"]',
     abstract: 'div[id="article-overiew-abstract-wrap"] > p',
@@ -140,7 +141,9 @@ const getArticleFromHTML = (html,url)=>{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
     //const link = $(selectors.link).attr('content');
     const link = url;
-    const title = $(selectors.title).text();
+    let title = $(selectors.title).text();
+    title = (title === "&nbsp;")||(title === "&nbsp" )? $(selectors.subtitle).attr('content') : title;
+    //title.replace(/<[^>]*>?/gm, ''); //strip html tags
     if( typeof title === 'string' || title instanceof String){
       var abstracts = $(selectors.abstract).text() ;
       if(abstracts === "") abstracts = $(selectors.abstract2).text();

@@ -50,18 +50,15 @@ const site = {
       '&filter=pubt.systematicreview'
     ],
   },
-  selectors: {
-    //page_link: 'div.docsum-content > a.docsum-title',
+selectors: {
     page_link: 'h1.heading-title > a',
-    results : 'div[class="results-amount"]> span[class="value"]',
-    articles : 'div.results-article',
-    //year: 'time.citation-year',
+    results: 'div.results-amount > span.value',
+    articles: 'div.results-article',
     year: 'meta[name="citation_date"]',
     title: 'h1.heading-title',
-    abstracts : 'div.abstract-content',
-    link: 'div.full-text-links-list > a.link-item',
-    results: 'div.results-amount > span.value',
-  }
+    abstracts: 'div.abstract-content',
+    link: 'div.full-text-links-list > a.link-item'
+  },  
 }
 
 // ----------------------------- generate search URL -----------------------------------------

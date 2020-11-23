@@ -14,11 +14,11 @@ lib.mergeCollection = async (connection,callback) => {
     const errors = [];
     try{
       const db = connection[process.env.MONGO_DB_NAME].db;
-      const newDb = connection[process.env.MONGO2_DB_NAME].model('crawled',ArticleSchema);
+      const newDb = connection[process.env.MONGO2_DB_NAME].model(process.env.MERGE_TO,ArticleSchema);
       //const newDb = connection[process.env.MONGO2_DB_NAME].model('article',ArticleSchema);
       const collections = await db.listCollections().toArray();
       console.log('Starting...');
-      for ( let i= 0 ; i <= collections.length; ){
+      for ( let i= 0 ; i < collections.length; ){
         const site = collections[i];
         //console.log('Inserting...');
         //console.log('Site:',site);
@@ -37,7 +37,8 @@ lib.mergeCollection = async (connection,callback) => {
       }
       console.log('Is This Done?');
     }catch(error){
-      errors.push(error);
+	console.error(error);
+      	errors.push(error);
 
     }finally{
       console.log('Is this the end?...');

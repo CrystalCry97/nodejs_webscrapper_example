@@ -59,7 +59,7 @@ app.run = async () =>{
   try{
     app.connection = await init();
     console.log('received connection..');
-    await app.crawl();
+    //await app.crawl();
     console.log('Finished crawling');
     await mergeCollection(app.connection);
   }catch(error){
