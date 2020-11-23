@@ -7,6 +7,9 @@ const ArticleSchema = require('./models/articles');
 const {mergeCollection} = require('./lib/mergedb');
 const _log = require('./lib/log');
 
+//require('events').EventEmitter.setMaxListeners(100);
+require('events').EventEmitter.defaultMaxListeners = 65;
+
 const app = {};
 
 const init = async () => {
@@ -37,13 +40,25 @@ app.crawl = async () =>{
   const errors = [];
  
     try{
-      for ( let i = 0; i < Object.values(scripts).length; ){
-        const site = Object.values(scripts)[i];
-        console.log('Crawling..:',site);
-        site.Model = con1.model(site.name,ArticleSchema);
-        await site.crawl();
-        i++;
-      }
+      await Promise.all(Object.values(scripts).map(async (site)=>{
+        try{
+          console.log('Crawling..:',site);
+          site.Model = con1.model(site.name,ArticleSchema);
+          await site.crawl();
+        }catch(error){
+          //doing comething with error;
+          console.log('Adoiiiii...');
+          console.error(error);
+        }
+           
+      }));
+      //for ( let i = 0; i < Object.values(scripts).length; ){
+        //const site = Object.values(scripts)[i];
+        //console.log('Crawling..:',site);
+        //site.Model = con1.model(site.name,ArticleSchema);
+        //await site.crawl();
+        //i++;
+      //}
     }catch(error){
       console.log('Error while crawling...');
       console.log('Error:',error);
@@ -59,7 +74,7 @@ app.run = async () =>{
   try{
     app.connection = await init();
     console.log('received connection..');
-    //await app.crawl();
+    await app.crawl();
     console.log('Finished crawling');
     await mergeCollection(app.connection);
   }catch(error){
@@ -72,10 +87,12 @@ app.run = async () =>{
     _log.append(filename,payload,function(error){
       if(error){
         console.log('Error wrinting logs');
+        process.exit(1);
+      }else{
         process.exit(0);
       }
     });
-    process.exit(0);
+    //process.exit(0);
   } 
 }
 

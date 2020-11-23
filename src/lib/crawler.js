@@ -44,24 +44,16 @@ lib.puppySearch = async (keyword) => {
 }
 
 
-lib.getResultFromHTML = (html,selector) => {
-  try{
-    const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
-    //const getResult = new Function('selector','selecStr') 
-    if(result !== undefined){
-      
-    }
-  }catch(error){
-    return null;
-  }
-}
-
 // ====================== reusable code section ================================
 
 lib.getHTML = async (URL) => {
   const iPhone = puppeteer.devices['iPhone 6'];
   //const browser = await puppeteer.launch({headless:false});
-  const browser = await puppeteer.launch();
+  //const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+        headless:true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
   try{
     const page = await browser.newPage();
     await page.emulate(iPhone);
@@ -81,12 +73,12 @@ lib.getHTML = async (URL) => {
 }
 
 
-lib.insertDB = async (articles,Model) => {
-   const Article = Model;
+lib.insertDB = async (articles,site) => {
+   const Article = site.Model;
    articles.map(function(article){
      if(article !== null){
        Article.create(article,function(error,result){
-         if(error) insertErrorHandler(error,article);
+         if(error) lib.insertErrorHandler(error,article);
          if(result) site.counts += 1;
        });
      }
@@ -104,5 +96,32 @@ lib.insertErrorHandler = (error,article) => {
   }
 }
 
+lib.stripHtmlTags = (str) =>{
+  if((str==null) || (str === '')){
+    return false;
+  }else{
+    var str = str.toString();
+    return str.replace(/<[^>]*>/g,'');
+  }
+}
 
+lib.trimText = (text,n) =>{
+	let trimmed = text.trim();
+  trimmed = trimmed.replace(/<[^>]*>?/gm,'');
+	trimmed = (trimmed.length < n+3) ? trimmed : trimmed.substr(n) + '...';
+	return trimmed;
+};
+
+lib.validTitle = (text) => {
+  const datebr = /\((\d{4})*\)/g //check if a date in bracket eg: (2030)
+  const date = /^\d{4}$/gm // only start with 4 digits and ends with it with no other text, eg: 2020 
+  const nullspace = /\&nbsp\;?/g // only the string '&nbsp' with or without `;`.
+  const inJapan = /\[((title\s)?in Japanese)\]/gi
+}
+
+lib.filterText = (text,callback) => {
+  //do something to check if string match regex.
+  //then execute callback.
+  
+}
 module.exports = lib;

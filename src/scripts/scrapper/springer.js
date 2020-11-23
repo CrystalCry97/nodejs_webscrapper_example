@@ -28,40 +28,41 @@ const keywords = require('../../lib/keywords').load();
   //'ABC:ATP binding cassette transporter super family',
 //]
 
-
 //----------------------------------- MAIN CONFIG PART---------------------------
 const site = {
-  name: 'acs_publication',
-  type: 'ACS Publication',
-  baseURL: 'https://pubs.acs.org',
-  searchURL:'https://pubs.acs.org/action/doSearch?AllField=',
+  name: 'springer',
+  type: 'Springer Link',
+  baseURL:'https://link.springer.com',
+  searchURL:'https://link.springer.com/search/page/',
   counts: 0,
   perPage:20,
   queries:{
-    page: '&startPage=',
-    limit: '&pageSize=',
-    category: '&ConceptID=',
-    sort: '&sortBy=Earliest',
+    key:'?query=',
+    category: '&facet-discipline="Medicine+%26+Public+Health"',
+    sort: '&sortOrder=newestFirst',
   },
   selectors:{
-    results : 'span[class="result__count"]', //$(result).text(); 
-    page_link: 'h5[class="issue-item_title"] > a',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
-    title: 'span[class="hlFld-Title"]', //$(title).text();
-    year:'meta[name="dc.Date"]', //$(year).attr('content');
+    results : 'h1[id="number-of-search-results-and-search-terms"] > strong', //$(result).first().text(); 
+    page_link: 'a[class="title"]',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
+    title: 'h1[class="c-article-title"]', //$(title).text();
+    year:'meta[name="dc.date"]', //$(year).attr('content');
     link:'meta[name="prism.url"]',
-    abstract: 'div[id="abstractBox"] > p[class="articleBody_abstractText"]',
+    abstract: 'div[id="Abs1-content"] > p',
     abstract2: 'section[id="Abs1"] > p',
   }
 
 }
+
+
 //------------------------------------------------------------------------------
 
 //------------------- Generating URL to crawl ----------------------------------
 const genURL = (searchTerms,n_page=1) =>{
   const searchKey = searchTerms.replace(/ /g,'+').replace(/:/g,'%3A').replace(/&/g,'%26');
-  const {page,limit,sort} = site.queries;
-  return site.searchURL+searchKey+page+n_page+sort+limit+20;
+  const {key,category,sort} = site.queries;
+  return site.searchURL+n_page+key+searchKey+category+sort;
 }
+
 //------------------------------------------------------------------------------
 
 // ------------------ Where Main Crawling function start ------------------------
@@ -75,11 +76,12 @@ site.crawl = async () => {
   }
 }
 // -----------------------------------------------------------------------------
-
 const crawl = async () =>{
   for(let i = 0 ; i < keywords.length;){
     const key = keywords[i];
+    console.log('KEY:',key);
     const url = genURL(key);
+    console.log('URL:',url);
     const html = await getHTML(url);
     if(html !== null){
       const result = getResultFromHTML(html);
@@ -92,7 +94,6 @@ const crawl = async () =>{
   console.log('Finished with:',site.counts);
   return Promise.resolve('Done');
 }
-
 // ----------------------- crawl each page to get raw html of the page---------
 const crawlEachPages = async ({pages},key) =>{
   for(let i = 0; i < pages;){
@@ -118,10 +119,9 @@ const crawlEachPages = async ({pages},key) =>{
         await insertDB(articles, site);
         x++;
       }
-
-    }
-    console.log(`${site.name} inserted: ${site.counts}`);
-    i++;
+   }
+    console.log(`${site.name},inserted: ${site.counts}`);
+    i+=10;
   }
 }
 // ----------------------------------------------------------------------------
@@ -141,14 +141,14 @@ const getArticleFromHTML = (html,url)=>{
       const volume = $(selectors.year).attr('content');
       const yrIndex = (volume) ? volume.search(regexYear) : null;
       const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
-      const category = site.type;
+      const type = site.type;
 
       return {
         title,
         link,
         abstract: abstracts,
         year,
-        category,
+        category: type,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');
@@ -156,9 +156,9 @@ const getArticleFromHTML = (html,url)=>{
   }catch(error){
     console.error(error);
     return null;
-  } 
+  }
+  
 }
-
 
 // --------------- get URLs from html --------------------------------
 const getURLsFromHTML = (html) => {
@@ -169,10 +169,10 @@ const getURLsFromHTML = (html) => {
       const url = $(el).attr('href');
       return site.baseURL + url;
     }).get();
+    //console.log('URL_LIST:',urls);
     return urls;
   }catch(error){}
 }
-
 
 // ------------- get result number -----------------------------------
 const getResultFromHTML = (html) =>{

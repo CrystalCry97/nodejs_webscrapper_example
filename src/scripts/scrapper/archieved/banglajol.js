@@ -1,35 +1,48 @@
 const puppeteer     = require('puppeteer');
 const cheerio       = require('cheerio');
 const {promisify}   = require('util');
-const {getHTML,insertDB,insertErrorHandler,sleep}       = require('../../lib/crawler');
-const keywords = require('../../lib/keywords').load();
+const querystring   = require('querystring');
+const crawler       = require('../../lib/crawler');
 
-//const keywords = [
-  //'Drug-herb',
-  //'Drug-food',
-  //'Herb',
-  //'Herb-interactions',
-  //'Botanical medicine',
-  //'herbal medicine',
-  //'traditional medicine',
-  //'alternative medicine',
-  //'complementary medicine',
-  //'P450 cytochromes',
-  //'organic anionic transporters',
-  //'organic anionic',
-  //'organic cationic transporters',
-  //'organic cationic',
-  //'organic cationic transport',
-  //'P-glycoprotein',
-  //'Drug transporters',
-  //'Organic anion transporting polypeptide',
-  //'ABC:ATP',
-  //'ABC:ATP binding',
-  //'ABC:ATP binding cassette transporter super family',
-//]
+const keywords = [
+  'Drug-herb',
+  'Drug-food',
+  'Herb',
+  'Herb-interactions',
+  'Botanical medicine',
+  'herbal medicine',
+  'traditional medicine',
+  'alternative medicine',
+  'complementary medicine',
+  'P450 cytochromes',
+  'organic anionic transporters',
+  'organic anionic',
+  'organic cationic transporters',
+  'organic cationic',
+  'organic cationic transport',
+  'P-glycoprotein',
+  'Drug transporters',
+  'Organic anion transporting polypeptide',
+  'ABC:ATP',
+  'ABC:ATP binding',
+  'ABC:ATP binding cassette transporter super family',
+]
 
+// ========================= KIV ==============================================
+// this site use post request, so there is no ways for us to manipulate URL.
+// need to manual sent post request either using fetch or inside puppeteer.
+// this site use PHP, puppeteer seems unecessary, (not sure).
+// 
+// Ref Link: https://stackoverflow.com/questions/47060534/how-do-post-request-in-puppeteer
+//
+// TO DO:
+//  - change the flow of this script in crawl and crawlEachPages.
+//  - change the getHTML methods. new function: puppySearch(keyword); return html
+//  - if able to get HTML then other functions are reusable.
+// status: not yet start
+//
+// ============================================================================
 
-//----------------------------------- MAIN CONFIG PART---------------------------
 const site = {
   name: 'banglajol',
   type: 'Bangladesh Journals',
@@ -39,9 +52,6 @@ const site = {
   perPage:20,
   queries:{
     page: '&searchPage=',
-    //limit: '&pageSize=',
-    //category: '&ConceptID=',
-    //sort: '&orderBy=Earliest&orderDir=',
   },
   selectors:{
     results : 'div[class="cmp_pagination"]', //$(result).text(); 
@@ -54,15 +64,29 @@ const site = {
   }
 
 }
-//------------------------------------------------------------------------------
 
-//------------------- Generating URL to crawl ----------------------------------
+site.crawl = async () => {
+  try{
+      return await crawl();
+      console.log('Finished crawl');
+  }catch(error){
+    console.error('Error crawling:',site.name);
+  }
+  //puppySearch('Herb');
+}
+
+// ------------- generate url to crawl ----------------------------------------------------
 const genURL = (searchTerms,n_page=1) =>{
   const searchKey = searchTerms.replace(/ /g,'%20').replace(/:/g,'%3A').replace(/&/g,'%26');
   const {page} = site.queries;
   return site.searchURL+searchKey+page+n_page;
 }
-//------------------------------------------------------------------------------
+
+const getHTML = crawler.getHTML;
+const insertDB = crawler.insertDB;
+const insertErrorHandler = crawler.insertErrorHandler;
+// ------------ crawl and crawl eachpage is mostly not changing, depends on the page flow---
+
 const crawl = async () =>{
   for(let i = 0 ; i < keywords.length;){
     const key = keywords[i];
@@ -81,56 +105,42 @@ const crawl = async () =>{
   return Promise.resolve('Finished');
 }
 
-// ------------------ Where Main Crawling function start ------------------------
-site.crawl = async () => {
-  try{
-    const promise = await crawl();
-    console.log('Finished Crawling...');
-    return promise;
-  }catch(error){
-    console.log('Error crawling:',site.name);
-  }
-}
-// -----------------------------------------------------------------------------
-
-// ----------------------- crawl each page to get raw html of the page---------
 const crawlEachPages = async ({pages},key) =>{
-  for(let i = 0; i < pages;){
+  for(let i = 1; i < pages + 1;){
     const url = genURL(key,i);
     console.log('URL:',url);
     const html = await getHTML(url);
     if(html !== null){
       const urls = getURLsFromHTML(html);
-      const n = 10 ; // urls per array;
-      const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_=>urls.splice(0,n)); // devide url list into arrays of size n;
-      // for or map ??
-      for( let x = 0; x < url_list.length;){
-        const promises = await url_list[x].map(async function(url){
-          const html = await getHTML(url);
-          if(html !== null){
-            const article = getArticleFromHTML(html,url);
-            return article;
-          }else{
-            return null;
-          }
+      const n = 10 ; // change this 10 links per url_list;
+      const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_ =>urls.splice(0,n));
+      for (let i = 0; i < url_list.length;){
+        const promises = await url_list[i].map(async function(url){
+        const html = await getHTML(url);//puppeteer have problem when open more than 10 windows, causing max eventlistener error.
+        if(html !== null){
+          const article = getArticleFromHTML(html,url);
+          return article;
+        }else{
+          return null;
+        }
         });
-        const articles = await Promise.all(promises);
-        await insertDB(articles, site);
-        x++;
+        const articles = await Promise.all(promises); 
+        await insertDB(articles,site);
+        i++;
       }
-   }
-    console.log(`${site.name}, inserted: ${site.counts}`); 
+    }
+    console.log('Inserted:',site.counts);
     i++;
   }
 }
-// ----------------------------------------------------------------------------
 
-// ------------- changing code ------------------------------------------------
+
+// ------------ part of code that mostly changing ----------
+
 const getArticleFromHTML = (html,url)=>{
   try{
     const {selectors} = site;
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
-    //const link = $(selectors.link).attr('content');
     const link = url;
     const title = $(selectors.title).text();
     if( typeof title === 'string' || title instanceof String){
@@ -138,13 +148,14 @@ const getArticleFromHTML = (html,url)=>{
       if(abstracts === "") abstracts = $(selectors.abstract2).text();
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.
       const year = $(selectors.year).text();
-      const category = site.type;
-      return {
+      const type = site.type;
+
+     return {
         title,
         link,
         abstract: abstracts,
         year,
-        category,
+        type,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');
@@ -156,21 +167,22 @@ const getArticleFromHTML = (html,url)=>{
   
 }
 
-// --------------- get URLs from html --------------------------------
+// ----------- get list of articles urls from the search result page -------------------------
+
 const getURLsFromHTML = (html) => {
   try{
     const {page_link} = site.selectors;
     const $ = cheerio.load(html,{normalizeWhitespace:true, xmlMode:true});
     const urls = $(page_link).map(function(i,el){
       const url = $(el).attr('href');
-      //return site.baseURL + url;
       return url;
     }).get();
-    //console.log('URL_LIST:',urls);
     return urls;
   }catch(error){}
 }
-// ------------- get result number -----------------------------------
+
+
+// ----------- get seach result count from the search result page -------------------------
 const getResultFromHTML = (html) =>{
   try{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
@@ -196,6 +208,7 @@ const getResultFromHTML = (html) =>{
     return null;
   }
 }
-//-----------------------------------------------------------------------------
+
+
 
 module.exports = site;

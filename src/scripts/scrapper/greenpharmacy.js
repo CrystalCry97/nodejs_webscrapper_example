@@ -31,36 +31,37 @@ const keywords = require('../../lib/keywords').load();
 
 //----------------------------------- MAIN CONFIG PART---------------------------
 const site = {
-  name: 'acs_publication',
-  type: 'ACS Publication',
-  baseURL: 'https://pubs.acs.org',
-  searchURL:'https://pubs.acs.org/action/doSearch?AllField=',
+  name: 'greenpharmacy',
+  type: 'International Journal of Green Pharmacy',
+  baseURL: 'http://greenpharmacy.info/',
+  searchURL:'http://greenpharmacy.info/index.php/ijgp/search/search?query=',
   counts: 0,
   perPage:20,
   queries:{
-    page: '&startPage=',
-    limit: '&pageSize=',
-    category: '&ConceptID=',
-    sort: '&sortBy=Earliest',
+    page: '&searchPage=',
   },
   selectors:{
-    results : 'span[class="result__count"]', //$(result).text(); 
-    page_link: 'h5[class="issue-item_title"] > a',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
-    title: 'span[class="hlFld-Title"]', //$(title).text();
-    year:'meta[name="dc.Date"]', //$(year).attr('content');
-    link:'meta[name="prism.url"]',
-    abstract: 'div[id="abstractBox"] > p[class="articleBody_abstractText"]',
-    abstract2: 'section[id="Abs1"] > p',
+    results : '.listing tr:last-child', //$(result).text(); 
+    page_link: 'td[width="30%"][align="right"] > a.file:first-child',// $('td[width="30%"][align="right"] > a.file').first().attr('href');
+    title: 'div[id="articleTitle"]', //$(title).text();
+    year:'meta[name="DC.Date.dateSubmitted"]', //$(year).attr('content');
+    link:'meta[name="DC.url"]',
+    abstract: 'meta[name="DC.Description"]',
+    abstract2: 'div[id="articleAbstract"] > div',
+
   }
 
 }
+
+
 //------------------------------------------------------------------------------
 
 //------------------- Generating URL to crawl ----------------------------------
 const genURL = (searchTerms,n_page=1) =>{
-  const searchKey = searchTerms.replace(/ /g,'+').replace(/:/g,'%3A').replace(/&/g,'%26');
-  const {page,limit,sort} = site.queries;
-  return site.searchURL+searchKey+page+n_page+sort+limit+20;
+  //const searchKey = searchTerms.replace(/ /g,'%20').replace(/:/g,'%3A').replace(/&/g,'%26');
+  const searchKey = searchTerms.replace(/ /g,'+').replace(/:/g,'%3A').replace(/&/g,'%26'); 
+  const {page} = site.queries;
+  return site.searchURL+searchKey+page+n_page;
 }
 //------------------------------------------------------------------------------
 
@@ -79,7 +80,9 @@ site.crawl = async () => {
 const crawl = async () =>{
   for(let i = 0 ; i < keywords.length;){
     const key = keywords[i];
+    console.log('KEY:',key);
     const url = genURL(key);
+    console.log('URL:',url);
     const html = await getHTML(url);
     if(html !== null){
       const result = getResultFromHTML(html);
@@ -92,7 +95,7 @@ const crawl = async () =>{
   console.log('Finished with:',site.counts);
   return Promise.resolve('Done');
 }
-
+//----------------------------------------------------------------------------------
 // ----------------------- crawl each page to get raw html of the page---------
 const crawlEachPages = async ({pages},key) =>{
   for(let i = 0; i < pages;){
@@ -118,9 +121,8 @@ const crawlEachPages = async ({pages},key) =>{
         await insertDB(articles, site);
         x++;
       }
-
-    }
-    console.log(`${site.name} inserted: ${site.counts}`);
+   }
+    console.log(`${site.name}, inserted: ${site.counts}`)
     i++;
   }
 }
@@ -135,20 +137,22 @@ const getArticleFromHTML = (html,url)=>{
     const link = url;
     const title = $(selectors.title).text();
     if( typeof title === 'string' || title instanceof String){
-      var abstracts = $(selectors.abstract).text() ;
+      var abstracts = $(selectors.abstract).attr('content') ;
       if(abstracts === "") abstracts = $(selectors.abstract2).text();
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.
-      const volume = $(selectors.year).attr('content');
-      const yrIndex = (volume) ? volume.search(regexYear) : null;
-      const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
-      const category = site.type;
+      const year = $(selectors.year).attr('content');
+      const type = site.type;
 
+      //console.log('TITLE:',title);
+      //console.log('YEAR:',volume);
+      //console.log('LINK:',link);
+      //console.log('\nDESCRIPTION: ',abstracts);
       return {
         title,
         link,
         abstract: abstracts,
         year,
-        category,
+        category: type,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');
@@ -156,9 +160,10 @@ const getArticleFromHTML = (html,url)=>{
   }catch(error){
     console.error(error);
     return null;
-  } 
+    //return null;
+  }
+  
 }
-
 
 // --------------- get URLs from html --------------------------------
 const getURLsFromHTML = (html) => {
@@ -167,20 +172,25 @@ const getURLsFromHTML = (html) => {
     const $ = cheerio.load(html,{normalizeWhitespace:true, xmlMode:true});
     const urls = $(page_link).map(function(i,el){
       const url = $(el).attr('href');
-      return site.baseURL + url;
+      //return site.baseURL + url;
+      return url;
     }).get();
+    //console.log('URL_LIST:',urls);
     return urls;
   }catch(error){}
 }
-
-
 // ------------- get result number -----------------------------------
 const getResultFromHTML = (html) =>{
   try{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
     const results = $(site.selectors.results).first().text();
     if(results !== undefined){
-      const total = parseInt(results.replace(/,/g,''));
+      console.log('RESULT IN:',results);
+      const tolRegx = /(?<=of) \d/g;
+      var total = results.slice(results.search(tolRegx),results.search(/(Items)/ig));
+      console.log('TOTAL:',total);
+      total = parseInt(total.replace(/,/g,''));
+      if(total === 0) throw new Error('No results found');
       let pages = (Math.ceil(total/site.perPage));
       return {
         total,
@@ -195,6 +205,7 @@ const getResultFromHTML = (html) =>{
     return null;
   }
 }
+
 
 //-----------------------------------------------------------------------------
 

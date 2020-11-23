@@ -28,40 +28,49 @@ const keywords = require('../../lib/keywords').load();
   //'ABC:ATP binding cassette transporter super family',
 //]
 
-
 //----------------------------------- MAIN CONFIG PART---------------------------
 const site = {
-  name: 'acs_publication',
-  type: 'ACS Publication',
-  baseURL: 'https://pubs.acs.org',
-  searchURL:'https://pubs.acs.org/action/doSearch?AllField=',
+  name: 'jstage',
+  type: 'Jstage Jp',
+  baseURL: 'https://www.jstage.jst.go.jp',
+  //https://www.jstage.jst.go.jp/result/global/-char/en?item1=4&word1=drug+herbs&from=0&order=5&bglobalSearch=false&sortby=5&showRecodsH=20&showRecords=20
+  searchURL:'https://www.jstage.jst.go.jp/result/global/-char/en?item1=4&word1=',
   counts: 0,
-  perPage:20,
+  perPage:10,
   queries:{
-    page: '&startPage=',
-    limit: '&pageSize=',
-    category: '&ConceptID=',
-    sort: '&sortBy=Earliest',
+    page: '&from=',//from=0 means 0-10, from=10 means 10-20 (second page), 
+    count: '&count=10', //number of articles show in a page
+    order: '&order=5', //published recent
+    sort:'sortby=5',
+    misc: '&bglobalSearch=false&showRecodsH=10&showRecords=20',
+
   },
   selectors:{
-    results : 'span[class="result__count"]', //$(result).text(); 
-    page_link: 'h5[class="issue-item_title"] > a',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
-    title: 'span[class="hlFld-Title"]', //$(title).text();
-    year:'meta[name="dc.Date"]', //$(year).attr('content');
-    link:'meta[name="prism.url"]',
-    abstract: 'div[id="abstractBox"] > p[class="articleBody_abstractText"]',
-    abstract2: 'section[id="Abs1"] > p',
+    results : 'div[id="search-results-infobar"] > div', //$(result).text(); 
+    page_link: 'div[class="searchlist-title"] > a',
+    //title: 'meta[name="citation_title"]', //$(title).attr('content');
+    title:'div[class="global-article-title"]',
+    subtitle: 'meta[name="subtitle"]',
+    year:'meta[name="citation_publication_date"]', //$(year).attr('content');
+    link:'meta[name="citation_pdf_url"]',
+    abstract: 'div[id="article-overiew-abstract-wrap"] > p',
+    abstract2: 'div[id="abstract"] > p',
+
   }
 
 }
+
+
 //------------------------------------------------------------------------------
 
 //------------------- Generating URL to crawl ----------------------------------
-const genURL = (searchTerms,n_page=1) =>{
-  const searchKey = searchTerms.replace(/ /g,'+').replace(/:/g,'%3A').replace(/&/g,'%26');
-  const {page,limit,sort} = site.queries;
-  return site.searchURL+searchKey+page+n_page+sort+limit+20;
+const genURL = (searchTerms,n_page=0) =>{
+  //const searchKey = searchTerms.replace(/ /g,'%20').replace(/:/g,'%3A').replace(/&/g,'%26');
+  const searchKey = searchTerms.replace(/ /g,'+').replace(/:/g,'%3A').replace(/&/g,'%26'); 
+  const {page,count,order,sort,misc} = site.queries;
+  return site.searchURL+searchKey+page+(n_page*10)+order+sort+count+misc;
 }
+
 //------------------------------------------------------------------------------
 
 // ------------------ Where Main Crawling function start ------------------------
@@ -75,11 +84,12 @@ site.crawl = async () => {
   }
 }
 // -----------------------------------------------------------------------------
-
 const crawl = async () =>{
   for(let i = 0 ; i < keywords.length;){
     const key = keywords[i];
+    console.log('KEY:',key);
     const url = genURL(key);
+    console.log('URL:',url);
     const html = await getHTML(url);
     if(html !== null){
       const result = getResultFromHTML(html);
@@ -92,7 +102,6 @@ const crawl = async () =>{
   console.log('Finished with:',site.counts);
   return Promise.resolve('Done');
 }
-
 // ----------------------- crawl each page to get raw html of the page---------
 const crawlEachPages = async ({pages},key) =>{
   for(let i = 0; i < pages;){
@@ -118,10 +127,9 @@ const crawlEachPages = async ({pages},key) =>{
         await insertDB(articles, site);
         x++;
       }
-
-    }
-    console.log(`${site.name} inserted: ${site.counts}`);
-    i++;
+   }
+    console.log(`${site.name},inserted: ${site.counts}`);
+    i+=10;
   }
 }
 // ----------------------------------------------------------------------------
@@ -133,22 +141,22 @@ const getArticleFromHTML = (html,url)=>{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
     //const link = $(selectors.link).attr('content');
     const link = url;
-    const title = $(selectors.title).text();
+    let title = $(selectors.title).text();
+    title = (title === "&nbsp;")||(title === "&nbsp" )? $(selectors.subtitle).attr('content') : title;
+    //title.replace(/<[^>]*>?/gm, ''); //strip html tags
     if( typeof title === 'string' || title instanceof String){
       var abstracts = $(selectors.abstract).text() ;
       if(abstracts === "") abstracts = $(selectors.abstract2).text();
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.
-      const volume = $(selectors.year).attr('content');
-      const yrIndex = (volume) ? volume.search(regexYear) : null;
-      const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
-      const category = site.type;
+      const year = $(selectors.year).attr('content');
+      const type = site.type;
 
       return {
         title,
         link,
         abstract: abstracts,
         year,
-        category,
+        category: type,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');
@@ -156,9 +164,9 @@ const getArticleFromHTML = (html,url)=>{
   }catch(error){
     console.error(error);
     return null;
-  } 
+  }
+  
 }
-
 
 // --------------- get URLs from html --------------------------------
 const getURLsFromHTML = (html) => {
@@ -167,12 +175,13 @@ const getURLsFromHTML = (html) => {
     const $ = cheerio.load(html,{normalizeWhitespace:true, xmlMode:true});
     const urls = $(page_link).map(function(i,el){
       const url = $(el).attr('href');
-      return site.baseURL + url;
+      //return site.baseURL + url;
+      return url;
     }).get();
+    //console.log('URL_LIST:',urls);
     return urls;
   }catch(error){}
 }
-
 
 // ------------- get result number -----------------------------------
 const getResultFromHTML = (html) =>{
@@ -180,7 +189,12 @@ const getResultFromHTML = (html) =>{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
     const results = $(site.selectors.results).first().text();
     if(results !== undefined){
-      const total = parseInt(results.replace(/,/g,''));
+      console.log('RESULT IN:',results);
+      const tolRegx = /(?<=of) \d/g;
+      var total = results.slice(results.search(tolRegx),-1);
+      console.log('TOTAL:',total);
+      total = parseInt(total.replace(/,/g,''));
+      if(total === 0) throw new Error('No results found');
       let pages = (Math.ceil(total/site.perPage));
       return {
         total,
