@@ -1,33 +1,34 @@
 const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 const {promisify} = require('util');
+const keywords = require('../../lib/keywords').load();
 
 
-const keywords = [
-  'Drug AND herb',
-  'Drug AND food',
-  'Herb',
-  'Herb AND interactions',
-  'Botanical AND medicine',
-  'herbal AND medicine',
-  'traditional AND medicine',
-  'alternative AND medicine',
-  'complementary AND medicine',
-  'P450 cytochromes',
-  'organic AND anionic transporters',
-  'organic AND anionic',
-  'organic AND cationic transporters',
-  'organic AND cationic',
-  'organic AND cationic AND transport',
-  'P-glycoprotein',
-  'Drug AND transporters',
-  'Organic anion transporting polypeptide',
-  'ABC:ATP',
-  'ABC:ATP binding',
-  'ABC:ATP binding cassette transporter super family',
+//const keywords = [
+  //'Drug AND herb',
+  //'Drug AND food',
+  //'Herb',
+  //'Herb AND interactions',
+  //'Botanical AND medicine',
+  //'herbal AND medicine',
+  //'traditional AND medicine',
+  //'alternative AND medicine',
+  //'complementary AND medicine',
+  //'P450 cytochromes',
+  //'organic AND anionic transporters',
+  //'organic AND anionic',
+  //'organic AND cationic transporters',
+  //'organic AND cationic',
+  //'organic AND cationic AND transport',
+  //'P-glycoprotein',
+  //'Drug AND transporters',
+  //'Organic anion transporting polypeptide',
+  //'ABC:ATP',
+  //'ABC:ATP binding',
+  //'ABC:ATP binding cassette transporter super family',
 
 
-]
+//]
 
 
 const taylor = {

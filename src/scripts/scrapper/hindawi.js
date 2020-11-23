@@ -1,28 +1,29 @@
 const puppeteer = require('puppeteer');
 const {promisify} = require('util');
 const cheerio = require('cheerio');
+const keywords = require('../../lib/keywords').load();
 
-const keywords = [
-  'Drug-herb interactions',
-  'Drug-food interactions',
-  'Botanical medicine',
-  'herbal medicine',
-  'traditional medicine',
-  'alternative medicine',
-  'complementary medicine',
-  'P450 cytochromes',
-  'organic anionic transporters',
-  'organic anionic',
-  'organic cationic transporters',
-  'organic cationic',
-  'organic cationic transport',
-  'P-glycoprotein',
-  'Drug transporters',
-  'Organic anion transporting polypeptide',
-  'ABC:ATP',
-  'ABC:ATP binding',
-  'ABC:ATP binding cassette transporter super family',
-]
+//const keywords = [
+  //'Drug-herb interactions',
+  //'Drug-food interactions',
+  //'Botanical medicine',
+  //'herbal medicine',
+  //'traditional medicine',
+  //'alternative medicine',
+  //'complementary medicine',
+  //'P450 cytochromes',
+  //'organic anionic transporters',
+  //'organic anionic',
+  //'organic cationic transporters',
+  //'organic cationic',
+  //'organic cationic transport',
+  //'P-glycoprotein',
+  //'Drug transporters',
+  //'Organic anion transporting polypeptide',
+  //'ABC:ATP',
+  //'ABC:ATP binding',
+  //'ABC:ATP binding cassette transporter super family',
+//]
 
 const filters = [
   'Drug-herb',

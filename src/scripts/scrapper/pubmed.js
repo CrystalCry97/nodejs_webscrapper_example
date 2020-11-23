@@ -3,29 +3,30 @@ const puppeteer     = require('puppeteer');
 const cheerio       = require('cheerio');
 const {promisify}   = require('util');
 const {getHTML,insertDB,insertErrorHandler,sleep}       = require('../../lib/crawler');
+const keywords = require('../../lib/keywords').load();
 
-const keywords = [
-  'Drug-herb interactions',
-  'Drug-food interactions',
-  'Botanical medicine',
-  'herbal medicine',
-  'traditional medicine',
-  'alternative medicine',
-  'complementary medicine',
-  'P450 cytochromes',
-  'organic anionic transporters',
-  'organic anionic',
-  'organic cationic transporters',
-  'organic cationic',
-  'organic cationic transport',
-  'P-glycoprotein',
-  'Drug transporters',
-  'Organic anion transporting polypeptide',
-  'ABC:ATP',
-  'ABC:ATP binding',
-  'ABC:ATP binding cassette transporter super family',
+//const keywords = [
+  //'Drug-herb interactions',
+  //'Drug-food interactions',
+  //'Botanical medicine',
+  //'herbal medicine',
+  //'traditional medicine',
+  //'alternative medicine',
+  //'complementary medicine',
+  //'P450 cytochromes',
+  //'organic anionic transporters',
+  //'organic anionic',
+  //'organic cationic transporters',
+  //'organic cationic',
+  //'organic cationic transport',
+  //'P-glycoprotein',
+  //'Drug transporters',
+  //'Organic anion transporting polypeptide',
+  //'ABC:ATP',
+  //'ABC:ATP binding',
+  //'ABC:ATP binding cassette transporter super family',
 
-]
+//]
 
 const site = {
   name: 'pubmed',
@@ -76,6 +77,7 @@ const genURL = (searchTerms,n_page=1) =>{
 
 //-------------------------------Naub Crawling function start ---------------------------------
 site.crawl = async () =>{
+  console.log('Keywords:',keywords);
   try{
     return await crawl();
   }catch(error){
@@ -121,7 +123,6 @@ const crawlEachPages = async ({pages},key) =>{
           }
         });
         const articles = await Promise.all(promises);
-        console.log('Inserting...',articles);
         await insertDB(articles,site);
         x++;
       }
@@ -169,7 +170,7 @@ const getURLsFromHTML = (html) =>{
     const $ = cheerio.load(html,{normalizeWhitespace:true, xmlMode:true});
     const urls = $(page_link).map(function(i,el){
       const url = $(el).attr('href');
-      console.log('URL:',url);
+      //console.log('URL:',url);
       return site.baseURL+url;
     }).get();
     return urls;
