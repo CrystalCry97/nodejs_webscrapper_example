@@ -2,31 +2,31 @@ const puppeteer     = require('puppeteer');
 const cheerio       = require('cheerio');
 const {promisify}   = require('util');
 const {getHTML,insertDB,insertErrorHandler,sleep,trimText,cleanTitle,validateTitle}       = require('../../lib/crawler');
-const keywords = require('../../lib/keywords').load();
+//const keywords = require('../../lib/keywords').load();
 
-//const keywords = [
-  //'Drug-herb',
-  //'Drug-food',
-  //'Herb',
-  //'Herb-interactions',
-  //'Botanical medicine',
-  //'herbal medicine',
-  //'traditional medicine',
-  //'alternative medicine',
-  //'complementary medicine',
-  //'P450 cytochromes',
-  //'organic anionic transporters',
-  //'organic anionic',
-  //'organic cationic transporters',
-  //'organic cationic',
-  //'organic cationic transport',
-  //'P-glycoprotein',
-  //'Drug transporters',
-  //'Organic anion transporting polypeptide',
-  //'ABC:ATP',
-  //'ABC:ATP binding',
-  //'ABC:ATP binding cassette transporter super family',
-//]
+const keywords = [
+  'Drug-herb',
+  'Drug-food',
+  'Herb',
+  'Herb-interactions',
+  'Botanical medicine',
+  'herbal medicine',
+  'traditional medicine',
+  'alternative medicine',
+  'complementary medicine',
+  'P450 cytochromes',
+  'organic anionic transporters',
+  'organic anionic',
+  'organic cationic transporters',
+  'organic cationic',
+  'organic cationic transport',
+  'P-glycoprotein',
+  'Drug transporters',
+  'Organic anion transporting polypeptide',
+  'ABC:ATP',
+  'ABC:ATP binding',
+  'ABC:ATP binding cassette transporter super family',
+]
 
 
 //----------------------------------- MAIN CONFIG PART---------------------------
@@ -137,6 +137,7 @@ const getArticleFromHTML = async (html,url)=>{
     if(url !== undefined && typeof url === 'string')
     {
       link = site.baseURL + url;
+      link = link.replace(/(\;jsessionid=.+)(?=\?doi)/gi,'');
     }  
     console.log('Link:',link);
     let title = $(selectors.title).text();
