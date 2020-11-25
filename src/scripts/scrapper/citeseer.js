@@ -139,11 +139,17 @@ const getArticleFromHTML = async (html,url)=>{
       link = site.baseURL + url;
       link = link.replace(/(\;jsessionid=.+)(?=\?doi)/gi,'');
     }  
-    console.log('Link:',link);
+    //console.log('Link:',link);
     let title = $(selectors.title).text();
     title = await cleanTitle(title);
+    const blacklisted = await validateTitle(title);
+    if(blacklisted){ 
+      //console.log('\n\n TITLE Is Blacklisted:',title);
+      //console.log('\n\n');
+      throw new Error(`Title is blacklisted:${title}`);
+    }
     if( typeof title === 'string' || title instanceof String){
-      console.log('Title:',title);
+      //console.log('Title:',title);
       let abstracts = $(selectors.abstract).attr('content') ;
       if(abstracts === "") abstracts = $(selectors.abstract2).text();
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.

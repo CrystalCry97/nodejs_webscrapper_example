@@ -128,9 +128,11 @@ lib.trimText = (text,n) =>{
 };
 
 lib.validateTitle = function(text,callback){
-  return valregex.map(function(rgx){
+  //console.log('RegexVal:',valregex);
+  const promises = valregex.map(function(rgx){
     if(text.match(rgx)) return true//callback(true); 
   });
+  return (promises.includes(true))? true : false
 }
 
 lib.cleanTitle = function (text,callback) {

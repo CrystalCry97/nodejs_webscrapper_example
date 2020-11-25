@@ -1,6 +1,6 @@
 /^\w+\*?\s?$/gi,
 /^\(\d\)$/gim,
-/^\Ⅲ{3}$/gim,
+/^\Ⅲ+$/gim,
 /^\((\d{4})\)$/gim,
 /^(\&nbsp\;?)$/gi,
 /^Abbreviations$/i,
