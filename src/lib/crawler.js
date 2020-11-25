@@ -2,8 +2,23 @@ const puppeteer = require('puppeteer');
 const {promisify} = require('util');
 const cheerio = require('cheerio');
 const queryString = require('querystring');
+const regexLoader = require('./regxLoader');
+
+const clnregex = regxLoader.load('clnregex');
+const valregex = regxLoader.load('valregex');
+
 
 const lib = {}
+//const regex = [
+  /////^\w+\*?\s?$/gi,
+  ///^\(\d\)$/gim,
+  //\Ⅲ{3}/gim,
+  ///\((\d{4})\)/gim,
+  ///\&nbsp\;?/gi,
+  ///\[\s?(text\s)?in\sJapanese\s?\]/gi,
+  ///((ht|f)tps?\:)?(\/\/)?((\w+\.){2,}\w+\/?)(\w+\/?){1,}/gi,
+  ///((?:ht|f)tps?:\/\/)?([^\s\:]+(\.[^\s|^\,]+){2,})/gi,
+//]
 // ========================== NOT SO REUSABLE CODE ===============================
 
 lib.puppySearch = async (keyword) => {
@@ -112,16 +127,19 @@ lib.trimText = (text,n) =>{
 	return trimmed;
 };
 
-lib.validTitle = (text) => {
-  const datebr = /\((\d{4})*\)/g //check if a date in bracket eg: (2030)
-  const date = /^\d{4}$/gm // only start with 4 digits and ends with it with no other text, eg: 2020 
-  const nullspace = /\&nbsp\;?/g // only the string '&nbsp' with or without `;`.
-  const inJapan = /\[((title\s)?in Japanese)\]/gi
+lib.validateTitle = function(text,callback){
+  return valregex.map(function(rgx){
+    if(text.match(rgx)) return true//callback(true); 
+  });
 }
 
-lib.filterText = (text,callback) => {
-  //do something to check if string match regex.
-  //then execute callback.
-  
+lib.cleanTitle = function (text,callback) {
+  let cleaned = text;
+  clnregex.map(function(rgx){
+    cleaned = cleaned.replace(rgx,'').trim();
+  });
+  //callback(cleaned);
+  return cleaned;
 }
+
 module.exports = lib;
