@@ -4,8 +4,8 @@ const cheerio = require('cheerio');
 const queryString = require('querystring');
 const regexLoader = require('./regxLoader');
 
-const clnregex = regxLoader.load('clnregex');
-const valregex = regxLoader.load('valregex');
+const clnregex = regexLoader.load('clnregex');
+const valregex = regexLoader.load('valregex');
 
 
 const lib = {}
