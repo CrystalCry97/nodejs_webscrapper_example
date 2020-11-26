@@ -1,7 +1,7 @@
 const path = require('path');
 
 const scripts = {}; 
-scripts['citeseer'] = require('./scrapper/citeseer')
+scripts['scdirect'] = require('./scrapper/sciencedirect');
 
 
 //const folderPath = path.join(__dirname,'scrapper');
