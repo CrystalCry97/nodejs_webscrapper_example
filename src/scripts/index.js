@@ -1,7 +1,7 @@
 const path = require('path');
 
 const scripts = {}; 
-scripts['scdirect'] = require('./scrapper/sciencedirect');
+scripts['acspub'] = require('./scrapper/acspub');
 
 //const folderPath = path.join(__dirname,'scrapper');
 //require('fs').readdirSync(folderPath).forEach(function(file){
