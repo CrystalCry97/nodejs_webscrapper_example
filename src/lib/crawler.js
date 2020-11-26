@@ -65,13 +65,18 @@ lib.getHTML = async (URL) => {
   const iPhone = puppeteer.devices['iPhone 6'];
   //const browser = await puppeteer.launch({headless:false});
   //const browser = await puppeteer.launch();
+  const isHeadless = parseInt(process.env.TOGGLE_HEADLESS);
+  //console.log(`HEADLESS ${isHeadless}:`,Boolean(isHeadless));
   const browser = await puppeteer.launch({
-        headless:true,
+        headless: Boolean(isHeadless),
         args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   try{
     const page = await browser.newPage();
-    await page.emulate(iPhone);
+    //await page.emulate(iPhone);
+    await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4272.0 Safari/537.36');
+    //const userAgent = await page.evaluate(() => navigator.userAgent );
+    //console.log(userAgent);
     await page.goto(URL,{waitUntil:"domcontentloaded"});
     const html = await page.content();
     return html;
