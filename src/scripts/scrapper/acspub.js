@@ -71,6 +71,7 @@ site.crawl = async () => {
     console.log('Finished Crawling...');
     return promise;
   }catch(error){
+    console.error(error);
     console.log('Error crawling:',site.name);
   }
 }
