@@ -179,10 +179,10 @@ const getResultFromHTML = (html) =>{
   try{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
     let results = $(site.selectors.results).first().text();
-    results = results.match(/(\d[^\s]+)/gi);
-    results = results[0];
-    console.log('Result:',results);
     if(results !== undefined){
+      results = results.match(/(\d[^\s]+)/gi);
+      results = results[0];
+      console.log('Result:',results);
       const total = parseInt(results.replace(/,/g,'').replace(/\sresult/gi,''));
       let pages = (Math.ceil(total/site.perPage));
       return {
@@ -195,7 +195,7 @@ const getResultFromHTML = (html) =>{
     }
   }catch(error){
     console.error(error.message);
-    return null;
+    return 0;
   }
 }
 
