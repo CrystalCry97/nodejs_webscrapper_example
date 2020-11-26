@@ -179,7 +179,7 @@ const getResultFromHTML = (html) =>{
   try{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
     let results = $(site.selectors.results).first().text();
-    if(results !== undefined){
+    if(results !== undefined && results !== null){
       results = results.match(/(\d[^\s]+)/gi);
       results = results[0];
       console.log('Result:',results);
