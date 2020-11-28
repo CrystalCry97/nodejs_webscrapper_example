@@ -1,7 +1,7 @@
 const puppeteer     = require('puppeteer');
 const cheerio       = require('cheerio');
 const {promisify}   = require('util');
-const {getHTML,insertDB,insertErrorHandler,sleep}       = require('../../lib/crawler');
+const {getHTML,insertDB,insertErrorHandler,sleep,trimText,cleanTitle,validateTitle}       = require('../../lib/crawler');
 const keywords = require('../../lib/keywords').load();
 
 //const keywords = [
@@ -143,6 +143,11 @@ const getArticleFromHTML = (html,url)=>{
     const link = url;
     let title = $(selectors.title).text();
     title = (title === "&nbsp;")||(title === "&nbsp" )? $(selectors.subtitle).attr('content') : title;
+    title = await cleanTitle(title);
+    const blacklisted = await validateTitle(title);
+    if(blacklisted){
+      throw new Error(`Title is blacklisted: ${title}`);
+    }
     //title.replace(/<[^>]*>?/gm, ''); //strip html tags
     if( typeof title === 'string' || title instanceof String){
       var abstracts = $(selectors.abstract).text() ;
