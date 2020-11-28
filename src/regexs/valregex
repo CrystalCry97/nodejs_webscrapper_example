@@ -4,7 +4,7 @@
 /^\((\d{4})\)$/gim,
 /^(\&nbsp\;?)$/gi,
 /^Abbreviations$/i,
-/^\[\s?(text\s)?in\sJapanese\s?\]$/gi,
+/^\[\s?(title\s)?in\sJapanese\s?\]$/gi,
 /^((ht|f)tps?\:)?(\/\/)?((\w+\.){2,}\w+\/?)(\w+\/?){1,}$/gi,
 /^((?:ht|f)tps?:\/\/)?([^\s\:]+(\.[^\s|^\,]+){2,})$/gi,
 /^\d+\s\(\d+\)$/i,
