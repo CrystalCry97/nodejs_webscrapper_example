@@ -135,7 +135,7 @@ const crawlEachPages = async ({pages},key) =>{
 // ----------------------------------------------------------------------------
 
 // ------------- changing code ------------------------------------------------
-const getArticleFromHTML = (html,url)=>{
+const getArticleFromHTML = async (html,url)=>{
   try{
     const {selectors} = site;
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
