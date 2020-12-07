@@ -1,7 +1,7 @@
 const puppeteer     = require('puppeteer');
 const cheerio       = require('cheerio');
 const {promisify}   = require('util');
-const {getHTML,insertDB,insertErrorHandler,sleep,stripHtmlTags}       = require('../../lib/crawler');
+const {getHTML,insertDB,insertErrorHandler,sleep}       = require('../../lib/crawler');
 const keywords = require('../../lib/keywords').load();
 
 //const keywords = [
@@ -29,38 +29,37 @@ const keywords = require('../../lib/keywords').load();
 //]
 
 
-//------------------------- MAIN CHANGING CONFIG PART---------------------------
+//----------------------------------- MAIN CONFIG PART---------------------------
 const site = {
-  name: 'ajcc',
-  type: 'American Journal of Critical Care',
-  baseURL: 'https://aacnjournals.org',
-  searchURL:'https://aacnjournals.org/ajcconline/search-results?q=',
+  name: 'scdirect',
+  type: 'Science Direct',
+  baseURL: 'https://www.sciencedirect.com/',
+  searchURL:'https://www.sciencedirect.com/search?qs=',
   counts: 0,
-  perPage:20,
+  perPage:25,
   queries:{
-    page: '&page=',
-    limit: '&pageSize=',
-    sort: '&sort=Date+-+Newest+First',
+    page: '&offset=',
+    limit: '&show=',
+    sort: '&sortBy=date',
   },
   selectors:{
-    results : 'div[class="sr-statistics"]', //$(result).text(); //need to do regex 
-    doi : 'meta[name="citation_doi"]',
-    page_link: 'div[class="sri-title customLink al-title"] > h4 > a ',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
-    title: 'h1[class="wi-article-title article-title-main"]', //$(title).text();
+    results : 'span[class="search-body-results-text"]', //$(result).text(); 
+    page_link: 'a[class="result-list-title-link u-font-serif text-s"]',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
+    title: 'span[class="title-text"]', //$(title).text();
     year:'meta[name="citation_publication_date"]', //$(year).attr('content');
-    link:'meta[name="prism.url"]',
-    abstract: 'div[data-widgetname="ArticleFulltext"]', //$(abstract).html(); then strip_html_tag
-    //abstract2: 'section[id="Abs1"] > p',
+    link:'link[rel="canonical"]',
+    abstract: 'div[class="abstract author"] > div > p',
+    abstract2: 'section[id="Abs1"] > p',
   }
 
 }
 //------------------------------------------------------------------------------
 
 //------------------- Generating URL to crawl ----------------------------------
-const genURL = (searchTerms,n_page=1) =>{
-  const searchKey = searchTerms.replace(/ /g,'+').replace(/:/g,'%3A').replace(/&/g,'%26');
+const genURL = (searchTerms,n_page=25) =>{
+  const searchKey = searchTerms.replace(/ /g,'%20').replace(/:/g,'%3A').replace(/&/g,'%26');
   const {page,limit,sort} = site.queries;
-  return site.searchURL+searchKey+page+n_page+sort+limit+20;
+  return site.searchURL+searchKey+page+n_page+sort+limit+25;
 }
 //------------------------------------------------------------------------------
 
@@ -80,7 +79,6 @@ const crawl = async () =>{
   for(let i = 0 ; i < keywords.length;){
     const key = keywords[i];
     const url = genURL(key);
-    console.log('GEN_URL:',url);
     const html = await getHTML(url);
     if(html !== null){
       const result = getResultFromHTML(html);
@@ -94,10 +92,9 @@ const crawl = async () =>{
   return Promise.resolve('Done');
 }
 
-
 // ----------------------- crawl each page to get raw html of the page---------
 const crawlEachPages = async ({pages},key) =>{
-  for(let i = 0; i < pages;){
+  for(let i = 25; i < pages;){
     const url = genURL(key,i);
     console.log('URL:',url);
     const html = await getHTML(url);
@@ -119,10 +116,12 @@ const crawlEachPages = async ({pages},key) =>{
         const articles = await Promise.all(promises);
         await insertDB(articles, site);
         x++;
-      } 
+      }
+
     }
-    console.log(`${site.name}, inserted: ${site.counts}`);
-    i++;
+    console.log(`${site.name} inserted: ${site.counts}`);
+    //i++;
+    i+=site.perPage;
   }
 }
 // ----------------------------------------------------------------------------
@@ -137,23 +136,19 @@ const getArticleFromHTML = (html,url)=>{
     const title = $(selectors.title).text();
     if( typeof title === 'string' || title instanceof String){
       var abstracts = $(selectors.abstract).text() ;
-      //console.log('\nABSTRACT:',abstracts);
-      abstracts = stripHtmlTags(abstracts);
-      //if(abstracts === "") abstracts = $(selectors.abstract2).text();
+      if(abstracts === "") abstracts = $(selectors.abstract2).text();
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.
       const volume = $(selectors.year).attr('content');
       const yrIndex = (volume) ? volume.search(regexYear) : null;
       const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
       const category = site.type;
-      const doi = $(selectors.doi).attr('content');
 
       return {
         title,
         link,
-        abstract: (abstracts)? abstracts : null ,
+        abstract: abstracts,
         year,
         category,
-        doi,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');
@@ -161,10 +156,10 @@ const getArticleFromHTML = (html,url)=>{
   }catch(error){
     console.error(error);
     return null;
-    //return null;
-  }
-  
+  } 
 }
+
+
 // --------------- get URLs from html --------------------------------
 const getURLsFromHTML = (html) => {
   try{
@@ -174,23 +169,21 @@ const getURLsFromHTML = (html) => {
       const url = $(el).attr('href');
       return site.baseURL + url;
     }).get();
-    //console.log('URL_LIST:',urls);
     return urls;
   }catch(error){}
 }
+
 
 // ------------- get result number -----------------------------------
 const getResultFromHTML = (html) =>{
   try{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
-    const results = $(site.selectors.results).first().text();
-    if(results !== undefined){
-      //console.error(' //need to add regex here for total'); 
-      console.log('RESULT:',results);
-      const totalRegex = /(?<=of) \d/g;
-      var total = results.slice(results.search(totalRegex),results.search(/(Search)/g)); 
-      console.log('TOTAL:',total);
-      total = parseInt(total.replace(/,/g,''));
+    let results = $(site.selectors.results).first().text();
+    if(results !== undefined && results !== null){
+      results = results.match(/(\d[^\s]+)/gi);
+      results = results[0];
+      console.log('Result:',results);
+      const total = parseInt(results.replace(/,/g,'').replace(/\sresult/gi,''));
       let pages = (Math.ceil(total/site.perPage));
       return {
         total,
@@ -202,7 +195,7 @@ const getResultFromHTML = (html) =>{
     }
   }catch(error){
     console.error(error.message);
-    return null;
+    return 0;
   }
 }
 

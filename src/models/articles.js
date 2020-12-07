@@ -7,6 +7,7 @@ const ArticleSchema = new Schema({
 	abstract: {type:String, required:true},
 	category: {type:String, },
 	year: {type:String},
+  doi: {type:String,},
   isDeleted: {type:Boolean, default:false},
 },{timestamps:true});
 

@@ -2,8 +2,23 @@ const puppeteer = require('puppeteer');
 const {promisify} = require('util');
 const cheerio = require('cheerio');
 const queryString = require('querystring');
+const regexLoader = require('./regxLoader');
+
+const clnregex = regexLoader.load('clnregex');
+const valregex = regexLoader.load('valregex');
+
 
 const lib = {}
+//const regex = [
+  /////^\w+\*?\s?$/gi,
+  ///^\(\d\)$/gim,
+  //\Ⅲ{3}/gim,
+  ///\((\d{4})\)/gim,
+  ///\&nbsp\;?/gi,
+  ///\[\s?(text\s)?in\sJapanese\s?\]/gi,
+  ///((ht|f)tps?\:)?(\/\/)?((\w+\.){2,}\w+\/?)(\w+\/?){1,}/gi,
+  ///((?:ht|f)tps?:\/\/)?([^\s\:]+(\.[^\s|^\,]+){2,})/gi,
+//]
 // ========================== NOT SO REUSABLE CODE ===============================
 
 lib.puppySearch = async (keyword) => {
@@ -50,13 +65,18 @@ lib.getHTML = async (URL) => {
   const iPhone = puppeteer.devices['iPhone 6'];
   //const browser = await puppeteer.launch({headless:false});
   //const browser = await puppeteer.launch();
+  const isHeadless = parseInt(process.env.TOGGLE_HEADLESS);
+  //console.log(`HEADLESS ${isHeadless}:`,Boolean(isHeadless));
   const browser = await puppeteer.launch({
-        headless:true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        headless: Boolean(isHeadless),
+        args: ['--incognito','--no-sandbox', '--disable-setuid-sandbox']
   });
   try{
     const page = await browser.newPage();
-    await page.emulate(iPhone);
+    //await page.emulate(iPhone);
+    await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4272.0 Safari/537.36');
+    //const userAgent = await page.evaluate(() => navigator.userAgent );
+    //console.log(userAgent);
     await page.goto(URL,{waitUntil:"domcontentloaded"});
     const html = await page.content();
     return html;
@@ -112,16 +132,21 @@ lib.trimText = (text,n) =>{
 	return trimmed;
 };
 
-lib.validTitle = (text) => {
-  const datebr = /\((\d{4})*\)/g //check if a date in bracket eg: (2030)
-  const date = /^\d{4}$/gm // only start with 4 digits and ends with it with no other text, eg: 2020 
-  const nullspace = /\&nbsp\;?/g // only the string '&nbsp' with or without `;`.
-  const inJapan = /\[((title\s)?in Japanese)\]/gi
+lib.validateTitle = function(text,callback){
+  //console.log('RegexVal:',valregex);
+  const promises = valregex.map(function(rgx){
+    if(text.match(rgx)) return true//callback(true); 
+  });
+  return (promises.includes(true))? true : false
 }
 
-lib.filterText = (text,callback) => {
-  //do something to check if string match regex.
-  //then execute callback.
-  
+lib.cleanTitle = function (text,callback) {
+  let cleaned = text;
+  clnregex.map(function(rgx){
+    cleaned = cleaned.replace(rgx,'').trim();
+  });
+  //callback(cleaned);
+  return cleaned;
 }
+
 module.exports = lib;

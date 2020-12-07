@@ -1,5 +1,5 @@
 {
-  "name": "hdi_scrapper",
+  "name": "node_scrapper",
   "version": "1.0.0",
   "description": "Simple web scrapper script managger written in javascript using node.js runtime",
   "main": "index.js",

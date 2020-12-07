@@ -1,47 +1,6 @@
-drug-herb interactions OR organic cation transporters
-drug-herb interactions AND organic cation transporters
-drug-herb interactions OR organic anionic transporter
-Drug-herb interactions bioactive compounds organic anionic transporters
-Drug-herb interactions inducer organic anionic transporters
-Drug-herb interactions inhibitor organic anionic transporters
-Drug-herb interactions substrate organic anionic transporters
-Drug-herb interactions substrate and P450 Cytochromes
-Drug-herb interactions substrate and inhibit P450 Cytochromes
-Drug-herb interactions substrate P450 Cytochromes
-Drug-herb interactions OR P450 Cytochromes
-Drug-herb interactions AND P450 Cytochromes
-Drug-herb interactions bioactive compounds organic cation transporters
-Drug-herb interactions inducer organic cation transporters
-Drug-herb interactions inhibitor organic cation transporters
-Drug-herb interactions substrate organic cation transporters
-drug-herb interactions AND organic anionic transporter
-Drug-herb interactions substrate P450 Cytochromes 
-Drug-herb interactions substrate OR P450 Cytochromes
-Drug-herb interactions substrate OR inhibit P450 Cytochromes
-Drug-herb interactions
-Drug herb interactions OR organic cation transporters
-Drug herb interactions AND organic cation transporters
-Drug herb interactions bioactive compounds organic cation transporters
-Drug herb interactions inducer organic cation transporters
-Drug herb interactions inhibitor organic cation transporters
-Drug herb interactions substrate organic cation transporters
-drug herb interactions OR organic anionic transporter
-drug herb interactions AND organic anionic transporter
-Drug herb interactions bioactive compounds organic anionic transporters
-Drug herb interactions inducer organic anionic transporters
-Drug herb interactions inhibitor organic anionic transporters
-Drug herb interactions substrate organic anionic transporters
-Drug herb interactions substrate and P450 Cytochromes
-Drug herb interactions substrate and inhibit P450 Cytochromes
-Drug herb interactions substrate P450 Cytochromes 
-Drug herb interactions OR P450 Cytochromes
-Drug herb interactions AND P450 Cytochromes
-Drug herb interactions substrate OR P450 Cytochromes
-Drug herb interactions substrate OR inhibit P450 Cytochromes
-Drug herb interactions 
-Drug-food interactions substrate and inhibit P450 Cytochromes
-Botanical medicine substrate and inhibit P450 Cytochromes
-Botanical medicine substrate and P450 Cytochromes
+Andrographis paniculata cyp3a4
+CYP3A4
+Andrographis paniculata
 Drug-drug interactions
 Phase I metabolic enzymes
 P450 cytochromes
@@ -68,4 +27,148 @@ Drug transporters
 Organic anion transporting polypeptide
 ABC:ATP
 ABC:ATP binding
-ABC:ATP binding cassette transporter super family
+cytochromes
+CYP 1A1
+CYP 1A2
+CYP2D6
+CYP2B6
+CYP2C19
+CYP2C9
+UGT1
+P-glyprotein transporter
+Organic anion transporting polypeptide 1B1
+Organic anion transporting polypeptide 1B3
+Organic anion transporter 1
+Organic anion transporter 3
+hERG cardiotoxicity
+hERG potassium channel
+Acacia senegal
+Achillea millefolium
+Actaea racemosa
+Aesculus hippocastanum
+Ageratina altissima
+Alcea rosea
+Alisma plantago-aquatica
+Allium sativum
+Aloe vera
+Althaea officinalis
+Amorphophallus konjac
+Anemone hepatica
+Angelica archangelica
+Angelica sinensis
+Apium graveolens
+Arnica montana
+Astragalus propinquus
+Atropa belladonna
+Azadirachta indica
+Bellis perennis
+Berberis vulgaris
+Borago officinalis
+Broussonetia kurzii
+Calendula officinalis
+Cannabis
+Capsicum annuum
+Capsicum frutescens
+Carica papaya
+Cassia occidentalis
+Catha edulis
+Cayaponia espelina
+Centaurea cyanus
+Chrysopogon zizanioides
+Chrysanthemum parthenium
+Cinchona
+Citrus × aurantium
+Citrus limon
+Citrus trifoliata
+Cissampelos pareira
+Cnicus benedictus
+Crataegus monogyna
+Curcuma longa
+Cypripedium parviflorum
+Digitalis purpurea
+Echinacea purpurea
+Equisetum arvense
+Eriodictyon crassifolium
+Eschscholzia californica
+Eucalyptus globulus
+Euonymus atropurpureus
+Euphorbia hirta
+Euphrasia
+Euterpe oleracea
+Frangula alnus
+Fumaria officinalis
+Galanthus
+Geranium robertianum
+Ginkgo biloba
+Glechoma hederacea
+Glycyrrhiza glabra
+Ginseng
+Hamamelis virginiana
+Hippophae rhamnoides
+Hoodia gordonii
+Hydrastis canadensis
+Hypericum perforatum
+Hyssopus officinalis
+Ilex paraguariensis
+Illicium verum
+Inula helenium
+Jasminum officinale
+Knautia arvensis
+Larrea tridentata
+Laurus nobilis
+Lavandula angustifolia
+Lawsonia inermis
+Leucojum aestivum
+Linum usitatissimum
+Magnolia officinalis
+Malva sylvestris
+Matricaria recutita
+Medicago sativa
+Melaleuca alternifolia
+Melissa officinalis
+Mentha x piperita
+Mentha x piperita
+Momordica charantia
+Morinda citrifolia
+Moringa oleifera
+Nasturtium officinale
+Nasturtium officinale
+Nigella sativa
+Ocimum tenuiflorum
+Oenothera
+Origanum vulgare
+Papaver somniferum
+Passiflora
+Peganum harmala
+Pelargonium sidoides
+Piper methysticum
+Piscidia piscipula
+Piscidia erythrina
+Plantago lanceolata
+Platycodon grandiflorus
+Polemonium reptans
+Psidium guajava
+Ptelea trifoliata
+Pulmonaria officinalis
+Quassia amara
+Reichardia tingitana
+Rosa majalis
+Rosmarinus officinalis
+Ruellia tuberosa
+Rumex crispus
+Salix alba
+Salvia officinalis
+Sambucus nigra
+Santalum album
+Santolina chamaecyparissus
+Saraca indica
+Satureja hortensis
+Sceletium tortuosum
+Senna auriculata
+Sesuvium portulacastrum
+Silybum marianum
+Stachytarpheta cayennensis
+Stellaria media
+Strobilanthes callosus
+Symphytum officinale
+Syzygium aromaticum

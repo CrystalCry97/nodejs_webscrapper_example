@@ -1,32 +1,32 @@
 const puppeteer     = require('puppeteer');
 const cheerio       = require('cheerio');
 const {promisify}   = require('util');
-const {getHTML,insertDB,insertErrorHandler,sleep}       = require('../../lib/crawler');
-const keywords = require('../../lib/keywords').load();
+const {getHTML,insertDB,insertErrorHandler,sleep,trimText,cleanTitle,validateTitle}       = require('../../lib/crawler');
+//const keywords = require('../../lib/keywords').load();
 
-//const keywords = [
-  //'Drug-herb',
-  //'Drug-food',
-  //'Herb',
-  //'Herb-interactions',
-  //'Botanical medicine',
-  //'herbal medicine',
-  //'traditional medicine',
-  //'alternative medicine',
-  //'complementary medicine',
-  //'P450 cytochromes',
-  //'organic anionic transporters',
-  //'organic anionic',
-  //'organic cationic transporters',
-  //'organic cationic',
-  //'organic cationic transport',
-  //'P-glycoprotein',
-  //'Drug transporters',
-  //'Organic anion transporting polypeptide',
-  //'ABC:ATP',
-  //'ABC:ATP binding',
-  //'ABC:ATP binding cassette transporter super family',
-//]
+const keywords = [
+  'Drug-herb',
+  'Drug-food',
+  'Herb',
+  'Herb-interactions',
+  'Botanical medicine',
+  'herbal medicine',
+  'traditional medicine',
+  'alternative medicine',
+  'complementary medicine',
+  'P450 cytochromes',
+  'organic anionic transporters',
+  'organic anionic',
+  'organic cationic transporters',
+  'organic cationic',
+  'organic cationic transport',
+  'P-glycoprotein',
+  'Drug transporters',
+  'Organic anion transporting polypeptide',
+  'ABC:ATP',
+  'ABC:ATP binding',
+  'ABC:ATP binding cassette transporter super family',
+]
 
 
 //----------------------------------- MAIN CONFIG PART---------------------------
@@ -127,19 +127,30 @@ const crawlEachPages = async ({pages},key) =>{
 // ----------------------------------------------------------------------------
 
 // ------------- changing code ------------------------------------------------
-const getArticleFromHTML = (html,url)=>{
+const getArticleFromHTML = async (html,url)=>{
   try{
     const {selectors} = site;
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
     //const link = $(selectors.link).attr('content');
     const url = $(selectors.link).attr('href');
+    let link = '';
     if(url !== undefined && typeof url === 'string')
     {
-      const link = site.baseURL + url;
+      link = site.baseURL + url;
+      link = link.replace(/(\;jsessionid=.+)(?=\?doi)/gi,'');
     }  
-    const title = $(selectors.title).text();
+    //console.log('Link:',link);
+    let title = $(selectors.title).text();
+    title = await cleanTitle(title);
+    const blacklisted = await validateTitle(title);
+    if(blacklisted){ 
+      //console.log('\n\n TITLE Is Blacklisted:',title);
+      //console.log('\n\n');
+      throw new Error(`Title is blacklisted:${title}`);
+    }
     if( typeof title === 'string' || title instanceof String){
-      var abstracts = $(selectors.abstract).attr('content') ;
+      //console.log('Title:',title);
+      let abstracts = $(selectors.abstract).attr('content') ;
       if(abstracts === "") abstracts = $(selectors.abstract2).text();
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.
       const year = $(selectors.year).attr('content');
