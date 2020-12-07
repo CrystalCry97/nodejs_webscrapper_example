@@ -53,6 +53,7 @@ const site = {
 selectors: {
     page_link: 'h1.heading-title > a',
     results: 'div.results-amount > span.value',
+    doi: 'a[class="id-link"]',
     articles: 'div.results-article',
     year: 'meta[name="citation_date"]',
     title: 'h1.heading-title',
@@ -102,14 +103,14 @@ const crawl = async () => {
 
 //------------------------- crawl Each page --------------------------------------------------
 const crawlEachPages = async ({pages},key) =>{
-  for(let i = 0; i < pages;){
+  for(let i = 1; i < pages+1;){
     const url = genURL(key,i);
     const html = await getHTML(url);
     if(html !== null){
       const urls = getURLsFromHTML(html);
       const n = 10; // urls per array.
       const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_=>urls.splice(0,n)); //devide urls into list of urls
-      //console.log('URLs:',url_list);
+      console.log('URLs:',url_list);
       // should I use for or map ?
       for(let x = 0; x < url_list.length;){
         const promises = await url_list[x].map(async function(url){
@@ -134,7 +135,7 @@ const getArticleFromHTML = (html,link) => {
   try{
     const {selectors} = site;
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
-    
+    console.log('Getting Article:',link);
     //------ get title
     let title = $(selectors.title).first().text();
     title = title.trim().substr(0,255);
@@ -143,6 +144,7 @@ const getArticleFromHTML = (html,link) => {
     if(typeof title == 'string' || title instanceof String){
       let abstract = $(selectors.abstracts).first().text();
       let year = $(selectors.year).attr('content');
+      const doi = $(selectors.doi).first().text();
 
       return {
         title,
@@ -150,6 +152,7 @@ const getArticleFromHTML = (html,link) => {
         abstract,
         year,
         category : site.type,
+        doi,
       }
     }else{
       throw new Error('Missing title for an article');
