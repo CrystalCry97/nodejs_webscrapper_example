@@ -87,10 +87,11 @@ const crawl = async () => {
   for(let i = 0; i < keywords.length;){
     const key = keywords[i];
     const url = genURL(key);
-    //console.log('FIRST:',url);
+    console.log('FIRST:',url);
     const html = await getHTML(url);
     if(html !== null){
       const result = getResultFromHTML(html);
+      console.log('Result:',result);
       await crawlEachPages(result,key);
     }
     i++;
