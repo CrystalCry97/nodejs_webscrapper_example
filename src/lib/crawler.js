@@ -69,7 +69,7 @@ lib.getHTML = async (URL) => {
   //console.log(`HEADLESS ${isHeadless}:`,Boolean(isHeadless));
   const browser = await puppeteer.launch({
         headless: Boolean(isHeadless),
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: ['--incognito','--no-sandbox', '--disable-setuid-sandbox']
   });
   try{
     const page = await browser.newPage();

@@ -44,6 +44,7 @@ const site = {
   },
   selectors:{
     results : 'div[class="sr-statistics"]', //$(result).text(); //need to do regex 
+    doi : 'meta[name="citation_doi"]',
     page_link: 'div[class="sri-title customLink al-title"] > h4 > a ',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
     title: 'h1[class="wi-article-title article-title-main"]', //$(title).text();
     year:'meta[name="citation_publication_date"]', //$(year).attr('content');
@@ -144,6 +145,7 @@ const getArticleFromHTML = (html,url)=>{
       const yrIndex = (volume) ? volume.search(regexYear) : null;
       const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
       const category = site.type;
+      const doi = $(selectors.doi).attr('content');
 
       return {
         title,
@@ -151,6 +153,7 @@ const getArticleFromHTML = (html,url)=>{
         abstract: (abstracts)? abstracts : null ,
         year,
         category,
+        doi,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');

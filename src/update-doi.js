@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const {URI2} = require('./configs/mongo');
 const ArticleSchema = require('./models/articles');
 const {getHTML} = require('./lib/crawler');
-
+const cheerio       = require('cheerio');
 const app = {};
 
 const init = async function () {
@@ -23,10 +23,12 @@ const fetchAndGet = async function () {
     const dbArticles = app.model;
     await dbArticles.find({category:{$ne:'CiteSeerx'}},'link').exec(function(error,results){
       if(error) throw error;
-      if(results){
-        console.log('Results:',results);
-        results.map((result)=>{
-          console.log('Test:',result);
+      if(results){ 
+        results.map(async (result)=>{
+          const html = await getHTML(result.link);
+          if(html !== null){
+            
+          }
         })
       }
     })
