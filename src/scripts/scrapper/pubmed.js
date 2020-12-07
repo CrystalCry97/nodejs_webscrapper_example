@@ -68,7 +68,7 @@ const genURL = (searchTerms,n_page=1) =>{
   //const pub = publication.join('');
   const searchKey = searchTerms.replace(/ /g,'%20').replace(/:/g,'%3A');
   const {page,sort,years,format} = site.queries;
-  return site.searchURl+searchKey+sort+page+n_page;
+  return site.searchURl+searchKey+format+sort+page+n_page;
 }
 
 //---------------------------------------------------------------------------------------------
