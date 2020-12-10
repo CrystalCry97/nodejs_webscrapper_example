@@ -54,7 +54,7 @@ const getDoi = async function(doc){
       const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
       const func = new Function('$',selFunc[category]);
       const doi = func($);
-      updateDoi(doi,link);
+      updateDoi(link,doi);
     }
   }catch(error){
     console.error('update Error:',error);
@@ -66,8 +66,11 @@ const updateDoi = function(link,doi){
   const filter = {link:link};
   const update = {doi:doi};
 
-  console.log(`link:${link}\nDoi:${doi}\n`);
-  dbArticles.findOneAndUpdate(filter,update);
+  //console.log(`link:${link}\nDoi:${doi}\n`);
+  let doc = await dbArticles.findOneAndUpdate(filter,update,{
+    new: true
+  });
+  console.log(`updated:${doc.title}\ndoi:${doc.doi}\n\n`);
 }
 
 app.run = async function(){
