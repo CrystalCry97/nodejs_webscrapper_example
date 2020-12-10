@@ -6,6 +6,7 @@ const {getHTML} = require('./lib/crawler');
 const cheerio       = require('cheerio');
 const app = {};
 
+require('events').EventEmitter.defaultMaxListeners = 100;
 
 const selFunc = {
   'American Journal of Critical Care' : `return $(meta['name="citation_doi"]').attr("content")`,
@@ -37,7 +38,7 @@ const fetchAndGet = async function () {
   try{
     const dbArticles = app.model;
     for await (const doc of dbArticles.find({category: {$nin:['Bangladesh Journals','Hindawi','CiteSeerx']}},'link category')){
-      updateDoi(doc);
+      await updateDoi(doc);
     }
   }catch(error){
     console.error(error)
@@ -53,7 +54,7 @@ const updateDoi = async function(doc){
       const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
       const func = new Function('$',selFunc[category]);
       const doi = func($);
-      console.log(`link:${link}\nDoi:${doi}`);
+      console.log(`link:${link}\nDoi:${doi}\n`);
     }
   }catch(error){
     console.error('update Error:',error);
