@@ -6,6 +6,21 @@ const {getHTML} = require('./lib/crawler');
 const cheerio       = require('cheerio');
 const app = {};
 
+
+const selFunc = {
+  'American Journal of Critical Care' : `return $(meta['name="citation_doi"]').attr("content")`,
+  'Bangladesh Journals': ``,
+  'International Journal of Green Pharmacy': `return $('meta[name="DC.Identifier.DOI"]').attr("content")`,
+  'Hindawi':``,
+  'Journal Drug Delivery & Therapeutics':`return $('meta[name="DC.Identifier.DOI"]').attr("content")`,
+  'Jstage Jp':`return $('meta[name="doi"]').attr("content")`,
+  'PubMed.gov': `return $('a[class="id-link"]').first().text()`,
+  'Science Direct':`return $('meta[name="dc.identifier"]').attr("content")`,
+  'Springer Link':`return $('meta[name="DOI"]').attr("content")`,
+  'Taylor and Francis':`return $('meta[name="dc.Identifier"]').attr("content")`,
+
+}
+
 const init = async function () {
   try{
     console.log('Connecting..');
@@ -21,18 +36,9 @@ const init = async function () {
 const fetchAndGet = async function () {
   try{
     const dbArticles = app.model;
-    await dbArticles.find({category:{$ne:'CiteSeerx'}},'link').exec(function(error,results){
-      if(error) throw error;
-      if(results){ 
-        results.map(async (result)=>{
-          const html = await getHTML(result.link);
-          if(html !== null){
-            
-          }
-        })
-      }
-    })
-    return Promise.resolve('Done?');
+    for await (const doc of dbArticles.find({category: {$nin:['Bangladesh Journals','Hindawi','CiteSeerx']}},'link category')){
+      console.log('doc');
+    }
   }catch(error){
     console.error(error)
     return Promise.reject(error);
