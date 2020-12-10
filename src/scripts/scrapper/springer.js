@@ -41,8 +41,12 @@ const site = {
     category: '&facet-discipline="Medicine+%26+Public+Health"',
     sort: '&sortOrder=newestFirst',
   },
+  functions:{
+    getDoi: '$(selectors.doi).attr("content")',
+  },
   selectors:{
     results : 'h1[id="number-of-search-results-and-search-terms"] > strong', //$(result).first().text(); 
+    doi : 'meta[name="DOI"]',
     page_link: 'a[class="title"]',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
     title: 'h1[class="c-article-title"]', //$(title).text();
     year:'meta[name="dc.date"]', //$(year).attr('content');
@@ -142,6 +146,7 @@ const getArticleFromHTML = (html,url)=>{
       const yrIndex = (volume) ? volume.search(regexYear) : null;
       const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
       const type = site.type;
+      const doi = $(selectors.doi).attr('content');
 
       return {
         title,
@@ -149,6 +154,7 @@ const getArticleFromHTML = (html,url)=>{
         abstract: abstracts,
         year,
         category: type,
+        doi,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');

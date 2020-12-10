@@ -45,8 +45,12 @@ const site = {
     misc: '&bglobalSearch=false&showRecodsH=10&showRecords=20',
 
   },
+  functions: (
+    getDoi : '$(selectors.doi).attr("content")'
+  ),
   selectors:{
     results : 'div[id="search-results-infobar"] > div', //$(result).text(); 
+    doi : 'meta[name="doi"]',
     page_link: 'div[class="searchlist-title"] > a',
     //title: 'meta[name="citation_title"]', //$(title).attr('content');
     title:'div[class="global-article-title"]',
@@ -155,6 +159,7 @@ const getArticleFromHTML = async (html,url)=>{
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.
       const year = $(selectors.year).attr('content');
       const type = site.type;
+      const doi = $(selectors.doi).attr("content");
 
       return {
         title,
@@ -162,6 +167,7 @@ const getArticleFromHTML = async (html,url)=>{
         abstract: abstracts,
         year,
         category: type,
+        doi,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');

@@ -42,6 +42,9 @@ const site = {
     limit: '&pageSize=',
     sort: '&sort=Date+-+Newest+First',
   },
+  functions:{
+    getDoi : 'return $(selectors.doi).attr("content")'
+  },
   selectors:{
     results : 'div[class="sr-statistics"]', //$(result).text(); //need to do regex 
     doi : 'meta[name="citation_doi"]',

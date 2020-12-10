@@ -43,6 +43,9 @@ const site = {
     category: '&ConceptID=',
     sort: '&sortBy=Earliest',
   },
+  functions:{
+    getDoi : 'return $(selectors.doi).attr("content")',
+  },
   selectors:{
     results : 'span[class="result__count"]', //$(result).text(); 
     doi : 'meta[scheme="doi"]',

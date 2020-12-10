@@ -44,8 +44,12 @@ const site = {
     sort: '&sortBy=Ppub',
     filter: '&ConceptID=6352',
   },
+  functions: {
+    getDoi : 'return $(selectors.doi).attr("content")'
+  },
   selectors:{
     results : 'div[class="paginationStatus"] > span:nth-child(3)', //$(result).text(); 
+    doi : 'meta[name="dc.Identifier"]',
     page_link: 'span[class="art_title  hlFld-Title"] > a',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
     title: 'span[class="hlFld-Title"]', //$(title).text();
     year:'meta[name="dc.Date"]', //$(year).attr('content');
@@ -144,6 +148,7 @@ const getArticleFromHTML = (html,url)=>{
       const yrIndex = (volume) ? volume.search(regexYear) : null;
       const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
       const category = site.type;
+      const doi = $(selectors.doi).attr("content");
 
       return {
         title,
@@ -151,6 +156,7 @@ const getArticleFromHTML = (html,url)=>{
         abstract: abstracts,
         year,
         category,
+        doi,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');
