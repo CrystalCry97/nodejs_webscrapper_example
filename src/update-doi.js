@@ -14,7 +14,7 @@ const selFunc = {
   'Hindawi':``,
   'Journal Drug Delivery & Therapeutics':`return $('meta[name="DC.Identifier.DOI"]').attr("content")`,
   'Jstage Jp':`return $('meta[name="doi"]').attr("content")`,
-  'PubMed.gov': `return $('a[class="id-link"]').first().text()`,
+  'PubMed.gov': `return $('meta[name="citation_doi"]').attr("content")`,
   'Science Direct':`return $('meta[name="dc.identifier"]').attr("content")`,
   'Springer Link':`return $('meta[name="DOI"]').attr("content")`,
   'Taylor and Francis':`return $('meta[name="dc.Identifier"]').attr("content")`,
