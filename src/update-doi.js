@@ -37,7 +37,7 @@ const fetchAndGet = async function () {
   try{
     const dbArticles = app.model;
     for await (const doc of dbArticles.find({category: {$nin:['Bangladesh Journals','Hindawi','CiteSeerx']}},'link category')){
-      await updateDoi(doc);
+      updateDoi(doc);
     }
   }catch(error){
     console.error(error)
@@ -53,7 +53,7 @@ const updateDoi = async function(doc){
       const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
       const func = new Function('$',selFunc[category]);
       const doi = func($);
-      console.log('DOI:',doi);
+      console.log(`link:${link}\nDoi:${doi}`);
     }
   }catch(error){
     console.error('update Error:',error);
