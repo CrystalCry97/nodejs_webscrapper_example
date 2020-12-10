@@ -56,7 +56,7 @@ const updateDoi = async function(doc){
       console.log('DOI:',doi);
     }
   }catch(error){
-    console.error('update Error:'error);
+    console.error('update Error:',error);
   }
 
 }
