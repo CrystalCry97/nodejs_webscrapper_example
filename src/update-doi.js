@@ -38,11 +38,28 @@ const fetchAndGet = async function () {
     const dbArticles = app.model;
     for await (const doc of dbArticles.find({category: {$nin:['Bangladesh Journals','Hindawi','CiteSeerx']}},'link category')){
       console.log('doc');
+      await updateDoi(doc);
     }
   }catch(error){
     console.error(error)
     return Promise.reject(error);
   }
+}
+
+const updateDoi = async function(doc){
+  const {link,category} = doc;
+  try{
+    const html = await getHTML(link);
+    if(html !== null){
+      const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
+      const func = new Function('$',selFunc[category]);
+      const doi = func($);
+      console.log('DOI:',doi);
+    }
+  }catch(error){
+    console.error('update Error:'error);
+  }
+
 }
 
 app.run = async function(){
