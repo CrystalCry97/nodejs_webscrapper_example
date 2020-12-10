@@ -37,7 +37,7 @@ const fetchAndGet = async function () {
   try{
     const dbArticles = app.model;
     for await (const doc of dbArticles.find({category: {$nin:['Bangladesh Journals','Hindawi','CiteSeerx']}},'link category')){
-      console.log('doc');
+      console.log('doc:',doc);
     }
   }catch(error){
     console.error(error)
