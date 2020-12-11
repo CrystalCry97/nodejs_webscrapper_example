@@ -64,7 +64,7 @@ const getDoi = async function(doc){
   }
 }
 
-const updateDoi = function(link,doi){
+const updateDoi = async function(link,doi){
   const dbArticles = app.model;
   const filter = {link:link};
   const update = {doi:doi};
