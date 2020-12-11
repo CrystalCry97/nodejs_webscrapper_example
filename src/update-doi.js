@@ -45,7 +45,7 @@ const fetchAndGet = async function () {
     //console.log('Splitted:',split_links);
     for await (let urls of split_links){
       await urls.map(async (doc)=>{
-        console.log('Doc:',doc);
+        getDoi(doc);
       });
     }
   }catch(error){
