@@ -43,12 +43,16 @@ const fetchAndGet = async function () {
     const links = await dbArticles.find({category: {$nin:['Bangladesh Journals','Hindawi','CiteSeerx']}},'link category')
     const split_links = new Array(Math.ceil(links.length/10)).fill().map(_=>links.splice(0,10));
     //console.log('Splitted:',split_links);
-    for await (let urls of split_links){
-
-      urls.map(async (doc)=>{
-	console.log('Doc:',doc.category);
-         await getDoi(doc);
+    for (let i = 0 ; i < split_links.length ;){
+      const promises = await split_links[i].map(async function(doc){
+        try{
+          const newDoc = await getDoi(doc);
+          return newDoc; 
+        }catch(error){console.error(error)}
       });
+      const newDoc = await Promise.all(promises);
+      await updateDoi(newDoc);
+      i++;
     }
   }catch(error){
     console.error(error)
@@ -64,16 +68,30 @@ const getDoi = async function(doc){
       const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
       const func = new Function('$',selFunc[category]);
       const doi = func($);
-	console.log('Updating DOI:',category);
-      updateDoi(link,doi);
+			//console.log('Updating DOI:',category);
+      //updateDoi(link,doi);
+      return {link,doi}
     }
   }catch(error){
     console.error('update Error:',error);
+    return null;
   }
 }
 
-const updateDoi = async function(link,doi){
+const updateDoi = async function(newDoc){
   const dbArticles = app.model;
+  newDoc.map(function(doc){
+    if(doc !== null){
+      console.log(`Updating:${doc.link}\nDOI:${doc.doi}`);
+      const filter = {link:doc.link};
+      const update = {doi:doc.doi};
+      dbArticles.updateOne(filter,update,function(error,result){
+        if(error) console.error(error);
+        if(result) console.log('Updated!\n');
+      });
+    }
+  });
+
   const filter = {link:link};
   const update = {doi:doi};
 
