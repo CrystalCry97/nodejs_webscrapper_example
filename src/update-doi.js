@@ -87,20 +87,10 @@ const updateDoi = async function(newDoc){
       const update = {doi:doc.doi};
       dbArticles.updateOne(filter,update,function(error,result){
         if(error) console.error(error);
-        if(result) console.log('Updated!\n');
+        if(result) console.log(`Updated:${result}!\n`);
       });
     }
   });
-
-  const filter = {link:link};
-  const update = {doi:doi};
-
-  //console.log(`link:${link}\nDoi:${doi}\n`);
-  try{
-  let doc = await dbArticles.findOneAndUpdate(filter,update,{
-    new: true
-  });
-  console.log(`updated:${doc.title}\ndoi:${doc.doi}\n\n`);
 }catch(error){
 	console.error(error);
 }
