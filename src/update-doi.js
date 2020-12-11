@@ -37,9 +37,12 @@ const init = async function () {
 const fetchAndGet = async function () {
   try{
     const dbArticles = app.model;
-    for await (const doc of dbArticles.find({category: {$nin:['Bangladesh Journals','Hindawi','CiteSeerx']}},'link category')){
-      await getDoi(doc);
-    }
+    //for await (const doc of dbArticles.find({category: {$nin:['Bangladesh Journals','Hindawi','CiteSeerx']}},'link category')){
+      //await getDoi(doc);
+    //} //this method caused cursor timeout.
+    const links = await dbArticles.find({category: {$nin:['Bangladesh Journals','Hindawi','CiteSeerx']}},'link category')
+    const split_links = new Array(Math.ceil(links.length/n).fill().map(_=>url.splice(0,n)));
+    console.log('Splitted':,split_links);
   }catch(error){
     console.error(error)
     return Promise.reject(error);
