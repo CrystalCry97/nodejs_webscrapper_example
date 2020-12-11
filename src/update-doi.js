@@ -44,8 +44,10 @@ const fetchAndGet = async function () {
     const split_links = new Array(Math.ceil(links.length/10)).fill().map(_=>links.splice(0,10));
     //console.log('Splitted:',split_links);
     for await (let urls of split_links){
-      await urls.map(async (doc)=>{
-        getDoi(doc);
+
+      urls.map(async (doc)=>{
+	console.log('Doc:',doc.category);
+         await getDoi(doc);
       });
     }
   }catch(error){
@@ -62,6 +64,7 @@ const getDoi = async function(doc){
       const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
       const func = new Function('$',selFunc[category]);
       const doi = func($);
+	console.log('Updating DOI:',category);
       updateDoi(link,doi);
     }
   }catch(error){
@@ -75,10 +78,14 @@ const updateDoi = async function(link,doi){
   const update = {doi:doi};
 
   //console.log(`link:${link}\nDoi:${doi}\n`);
+  try{
   let doc = await dbArticles.findOneAndUpdate(filter,update,{
     new: true
   });
   console.log(`updated:${doc.title}\ndoi:${doc.doi}\n\n`);
+}catch(error){
+	console.error(error);
+}
 }
 
 app.run = async function(){
