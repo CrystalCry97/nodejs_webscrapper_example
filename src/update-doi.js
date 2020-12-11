@@ -91,9 +91,6 @@ const updateDoi = async function(newDoc){
       });
     }
   });
-}catch(error){
-	console.error(error);
-}
 }
 
 app.run = async function(){
