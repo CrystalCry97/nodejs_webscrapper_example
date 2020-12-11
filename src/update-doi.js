@@ -42,7 +42,12 @@ const fetchAndGet = async function () {
     //} //this method caused cursor timeout.
     const links = await dbArticles.find({category: {$nin:['Bangladesh Journals','Hindawi','CiteSeerx']}},'link category')
     const split_links = new Array(Math.ceil(links.length/10)).fill().map(_=>links.splice(0,10));
-    console.log('Splitted:',split_links);
+    //console.log('Splitted:',split_links);
+    for await (let urls of split_links){
+      await urls.map(async (doc)=>{
+        console.log('Doc:',doc);
+      });
+    }
   }catch(error){
     console.error(error)
     return Promise.reject(error);
