@@ -41,28 +41,31 @@ const fetchAndGet = async function () {
       //await getDoi(doc);
     //} //this method caused cursor timeout.
     const links = await dbArticles.find({category: {$nin:['Bangladesh Journals','Hindawi','CiteSeerx']}},'link category')
-    const split_links = new Array(Math.ceil(links.length/10)).fill().map(_=>links.splice(0,10));
-    //console.log('Splitted:',split_links);
-    for (let i = 0 ; i < split_links.length ;){
-      const promises = await split_links[i].map(async function(doc){
-        try{
-          const newDoc = await getDoi(doc);
-          return newDoc; 
-        }catch(error){console.error(error)}
-      });
-      const newDoc = await Promise.all(promises);
-      await updateDoi(newDoc);
-      i++;
+    if( links.length > 0 ){
+      const split_links = new Array(Math.ceil(links.length/10)).fill().map(_=>links.splice(0,10));
+      //console.log('Splitted:',split_links);
+      for (let i = 0 ; i < split_links.length ;){
+        const promises = await split_links[i].map(async function(doc){
+          try{
+            const newDoc = await getDoi(doc);
+            return newDoc; 
+          }catch(error){console.error(error)}
+        });
+        const newDoc = await Promise.all(promises);
+        await updateDoi(newDoc);
+        i++;
+      }
     }
   }catch(error){
+    console.log('Fetch Error');
     console.error(error)
     return Promise.reject(error);
   }
 }
 
 const getDoi = async function(doc){
-  const {link,category} = doc;
   try{
+    const {link,category} = doc;
     const html = await getHTML(link);
     if(html !== null){
       const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
@@ -73,24 +76,29 @@ const getDoi = async function(doc){
       return {link,doi}
     }
   }catch(error){
-    console.error('update Error:',error);
+    console.error('Get DOI Error:',error);
     return null;
   }
 }
 
 const updateDoi = async function(newDoc){
-  const dbArticles = app.model;
-  newDoc.map(function(doc){
-    if(doc !== null){
-      console.log(`Updating:${doc.link}\nDOI:${doc.doi}`);
-      const filter = {link:doc.link};
-      const update = {doi:doc.doi};
-      dbArticles.updateOne(filter,update,function(error,result){
-        if(error) console.error(error);
-        if(result) console.log(`Updated:${result}!\n`);
-      });
-    }
-  });
+  try{
+    const dbArticles = app.model;
+    newDoc.map(function(doc){
+      if(doc !== null){
+        console.log(`Updating:${doc.link}\nDOI:${doc.doi}`);
+        const filter = {link:doc.link};
+        const update = {doi:doc.doi};
+        dbArticles.updateOne(filter,update,function(error,result){
+          if(error) console.error(error);
+          if(result) console.log(`Updated:${result}!\n`);
+        });
+      }
+    });
+  }catch(error){
+    console.log('Update Error');
+    console.error(error);
+  }
 }
 
 app.run = async function(){
