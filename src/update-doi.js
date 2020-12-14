@@ -67,7 +67,33 @@ const fetchAndGet = async function () {
     return Promise.reject(error);
   }
 }
-
+const fixSingleCategory = async function(category){
+  try{
+    const dbArticles = app.model;
+    const n = 20;
+    //{doi: {$exists : false}, 
+    const links = await dbArticles.find(category: category},'link category')
+    if( links.length > 0 ){
+      const split_links = new Array(Math.ceil(links.length/n)).fill().map(_=>links.splice(0,n));
+      //console.log('Splitted:',split_links);
+      for (let i = 0 ; i < split_links.length ;){
+        const promises = await split_links[i].map(async function(doc){
+          try{
+            const newDoc = await getDoi(doc);
+            return newDoc; 
+          }catch(error){console.error(error)}
+        });
+        const newDoc = await Promise.all(promises);
+        await updateDoi(newDoc);
+        i++;
+      }
+    }
+  }catch(error){
+    console.log('Fetch Error');
+    console.error(error)
+    return Promise.reject(error); 
+  }
+}
 const getDoi = async function(doc){
   try{
     const {link,category} = doc;
@@ -117,6 +143,7 @@ app.run = async function(){
   try{
     const connection = await init();
     await fetchAndGet();
+    //await fixSingleCategory('Taylor and Francis');
   }catch(error){
     console.error(error)
   }finally{
