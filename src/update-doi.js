@@ -18,7 +18,7 @@ const selFunc = {
   'PubMed.gov': `return $('meta[name="citation_doi"]').attr("content")`,
   'Science Direct':`return $('meta[name="dc.identifier"]').attr("content")`,
   'Springer Link':`return $('meta[name="DOI"]').attr("content")`,
-  'Taylor and Francis':`return $('meta[name="dc.Identifier"]').attr("content")`,
+  'Taylor and Francis':`return $('meta[scheme="doi"]').attr("content")`,
 
 }
 var count = 0; 
