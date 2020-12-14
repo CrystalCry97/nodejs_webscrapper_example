@@ -72,7 +72,7 @@ const fixSingleCategory = async function(category){
     const dbArticles = app.model;
     const n = 20;
     //{doi: {$exists : false}, 
-    const links = await dbArticles.find(category: category},'link category')
+    const links = await dbArticles.find({category: category},'link category')
     if( links.length > 0 ){
       const split_links = new Array(Math.ceil(links.length/n)).fill().map(_=>links.splice(0,n));
       //console.log('Splitted:',split_links);
