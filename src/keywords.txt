@@ -42,9 +42,108 @@ Organic anion transporter 1
 Organic anion transporter 3
 hERG cardiotoxicity
 hERG potassium channel
+aldehyde oxidase (AO)
+carboxylesterase (CES)
+monoamine oxidase (MAO)
+flavin monooxygenase (FMO)
+xanthine oxidase (XO)
+alcohol/aldehyde dehydrogenase (ADH/ALDH)
+Enzyme Metabolic 
+Human hepatocytes
+HepaRG cells
+HepG2 cells
+Predicted ratio R1
+UGT1 
+UGT1A1 
+UGT1A3 
+UGT1A4 
+UGT1A5 
+UGT1A6 
+UGT1A7 
+UGT1A8 
+UGT1A9 
+UGT1A10 
+UGT2A1 
+UGT2A2 
+UGT2A3 
+UGT2B4 
+UGT2B7 
+UGT2B10 
+UGT2B11 
+UGT2B15 
+UGT2B17 
+UGT2B28 
+UGT3A1 
+UGT3A2  
+UGT8A1 
+UGT2  
+UGT2A 
+UGT2B  
+UGT3  
+UGT8 
+Transporters 
+Drug transporters 
+P-glycoprotein  
+P-gp  
+Multi-drug Resistance 1 
+MDR1 protein 
+Breast cancer resistance protein 
+BCRP 
+Organic anion transporting polypeptide 1B1/1B3 
+OATP1B1 
+OATP1B3 
+Organic anion transporter 1/3  
+OAT1 
+OAT3 
+Multidrug and toxin extrusion  
+MATE proteins 
+MATE1 
+MATE2-K 
+Organic cation transporter 2  
+OCT2
+Bidirectional assay   
+Permeability  
+Papps 
+Efflux ratio  
+ER 
+Caco2 cells 
+Igut 
+IC50
+Substrate determination
+Uptake assay
+Uptake ratio
+blood-to-plasma concentration ratio
+Substrate determination 
+Uptake assay – in vitro 
+Uptake ratio 
+IC50 (inhibition) 
+Ki
+Pharmacokinetics 
+Pharmacokinetic interaction 
+Pharmacodynamics 
+Pharmacodynamic interaction 
+Absorption 
+Metabolism 
+Distribution 
+Protein binding 
+Excretion
+Inhibition 
+Induction 
+Patch clamp assay (in vitro or in vivo) 
+hERG transfected CHO cells 
+hERG transfected HEK cells 
+cardiomyocytes 
+stem cell derived cardiomyocytes
 Acacia senegal
 Achillea millefolium
+Acacia farnesiana (L.) Willd  
+Acacia farnesiana
 Actaea racemosa
+Acalypha siamensis Oliv. Ex Gage 
+Acalypha siamensis
+Acorus calamus
+Adenanthera pavonina
+Aegle marmelos
 Aesculus hippocastanum
 Ageratina altissima
 Alcea rosea
@@ -52,12 +151,20 @@ Alisma plantago-aquatica
 Allium sativum
 Aloe vera
 Althaea officinalis
+Alpinia galanga
+Alstonia angustiloba
+Anacardium occidentale L
+Archidendron jiringa 
 Amorphophallus konjac
 Anemone hepatica
 Angelica archangelica
 Angelica sinensis
 Apium graveolens
 Arnica montana
+Ardisia crenata
+Areca catechu
+Averrhoa bilimbi  
+Azadirachta indica 
 Astragalus propinquus
 Atropa belladonna
 Azadirachta indica

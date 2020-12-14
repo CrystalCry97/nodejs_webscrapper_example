@@ -28,12 +28,13 @@ const site = {
     ],
   },
   functions:{
-    getDoi : '$(selectors.doi).first().text()',
+    getDoi : '$(selectors.doi).attr("content")',
   },
 selectors: {
     page_link: 'h1.heading-title > a',
     results: 'div.results-amount > span.value',
-    doi: 'a[class="id-link"]',
+    //doi: 'a[class="id-link"]',
+    doi: 'meta[name="citation_doi"]',
     articles: 'div.results-article',
     year: 'meta[name="citation_date"]',
     title: 'h1.heading-title',
@@ -115,16 +116,19 @@ const getArticleFromHTML = (html,link) => {
   try{
     const {selectors} = site;
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
-    console.log('Getting Article:',link);
+    //console.log('Getting Article:',link);
     //------ get title
     let title = $(selectors.title).first().text();
     //title = title.trim().substr(0,255);
     
     //------ get description.
     if(typeof title == 'string' || title instanceof String){
+      const regexYear = /\d{4}/;
       let abstract = $(selectors.abstracts).first().text();
       let year = $(selectors.year).attr('content');
-      const doi = $(selectors.doi).first().text();
+      const yrIndex = year.search(regexYear);
+      year = year.slice(yrIndex,yrIndex+4);
+      const doi = $(selectors.doi).attr("content");
 
       return {
         title,

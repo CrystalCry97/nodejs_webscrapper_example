@@ -128,7 +128,7 @@ const crawl = async () =>{
 const crawlEachPages = async ({pages},key,pub) => {
   for(let i = 1; i < pages ; ){
     const url = genURL(key,i,pub);
-    console.log('\n\nCRAWLING:',url);
+    //console.log('\n\nCRAWLING:',url);
     const html = await getHTML(url);
     if(html !== null){
       const Json = getJsonFromHTML(html);

@@ -45,9 +45,9 @@ const site = {
     misc: '&bglobalSearch=false&showRecodsH=10&showRecords=20',
 
   },
-  functions: (
+  functions: {
     getDoi : '$(selectors.doi).attr("content")'
-  ),
+  },
   selectors:{
     results : 'div[id="search-results-infobar"] > div', //$(result).text(); 
     doi : 'meta[name="doi"]',
@@ -157,7 +157,9 @@ const getArticleFromHTML = async (html,url)=>{
       var abstracts = $(selectors.abstract).text() ;
       if(abstracts === "") abstracts = $(selectors.abstract2).text();
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.
-      const year = $(selectors.year).attr('content');
+      let year = $(selectors.year).attr('content');
+      const yrIndex = year.search(regexYear);
+      year = year.slice(yrIndex,yrIndex+4);
       const type = site.type;
       const doi = $(selectors.doi).attr("content");
 

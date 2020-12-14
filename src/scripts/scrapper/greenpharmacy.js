@@ -45,7 +45,8 @@ const site = {
   },
   selectors:{
     results : '.listing tr:last-child', //$(result).text(); 
-    doi : 'meta[name="DC.Identifier.DOI"]',
+    //doi : 'meta[name="DC.Identifier.DOI"]',
+    doi: 'a[id="pub-id::doi"]',
     page_link: 'td[width="30%"][align="right"] > a.file:first-child',// $('td[width="30%"][align="right"] > a.file').first().attr('href');
     title: 'div[id="articleTitle"]', //$(title).text();
     year:'meta[name="DC.Date.dateSubmitted"]', //$(year).attr('content');
@@ -144,9 +145,11 @@ const getArticleFromHTML = (html,url)=>{
       var abstracts = $(selectors.abstract).attr('content') ;
       if(abstracts === "") abstracts = $(selectors.abstract2).text();
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.
-      const year = $(selectors.year).attr('content');
+      let year = $(selectors.year).attr('content');
+      const yrIndex = year.search(regexYear);
+      year = year.slice(yrIndex,yrIndex+4);
       const type = site.type;
-      const doi = $(selectors.doi).attr("content");
+      const doi = $(selectors.doi).attr("href");
 
       //console.log('TITLE:',title);
       //console.log('YEAR:',volume);
