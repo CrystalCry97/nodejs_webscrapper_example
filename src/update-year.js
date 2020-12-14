@@ -42,8 +42,7 @@ const fetchAndGet = async function () {
     //for await (const doc of dbArticles.find({category: {$nin:['Bangladesh Journals','Hindawi','CiteSeerx']}},'link category')){
       //await getDoi(doc);
     //} //this method caused cursor timeout.
-    //const links = await dbArticles.find({category: {$nin:excludeList}},'link category')
-    const links = await dbArticles.find({doi: {$exists : false}},'link category')
+    const links = await dbArticles.find({category: {$nin:excludeList}},'link category')
     if( links.length > 0 ){
       const split_links = new Array(Math.ceil(links.length/10)).fill().map(_=>links.splice(0,10));
       //console.log('Splitted:',split_links);
