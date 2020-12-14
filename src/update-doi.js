@@ -9,7 +9,7 @@ const app = {};
 require('events').EventEmitter.defaultMaxListeners = 100;
 
 const selFunc = {
-  'American Journal of Critical Care' : `return $(meta['name="citation_doi"]').attr("content")`,
+  'American Journal of Critical Care' : `return $('meta[name="citation_doi"]').attr("content")`,
   'Bangladesh Journals': ``,
   'International Journal of Green Pharmacy': `return $('meta[name="DC.Identifier.DOI"]').attr("content")`,
   'Hindawi':``,
@@ -79,10 +79,10 @@ const getDoi = async function(doc){
 			//console.log('Updating DOI:',category);
       //updateDoi(link,doi);
       if(doi === undefined) {
-	throw new Error('Undefined DOI');
-	}else{ 
+      	throw new Error('Undefined DOI');
+	    }else{ 
       	return {link,doi}
-	}
+	    }
     }
   }catch(error){
     console.error('Get DOI Error:',error);
