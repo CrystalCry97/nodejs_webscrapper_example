@@ -46,6 +46,7 @@ const fetchAndGet = async function () {
     //const links = await dbArticles.find({category: {$nin:excludeList}},'link category')
     const n = 20;
     const links = await dbArticles.find({doi: {$exists : false}, category: {$nin:excludeList}},'link category')
+    console.log('Result:',links.length);
     if( links.length > 0 ){
       const split_links = new Array(Math.ceil(links.length/n)).fill().map(_=>links.splice(0,n));
       //console.log('Splitted:',split_links);
