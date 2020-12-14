@@ -113,7 +113,7 @@ const getDoi = async function(doc){
 	    }
     }
   }catch(error){
-    console.error('Get DOI Error:',error);
+    console.error('Get DOI Error:',doc.link);
     return null;
   }
 }
