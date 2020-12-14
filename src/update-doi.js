@@ -12,7 +12,7 @@ const selFunc = {
   'American Journal of Critical Care' : `return $('meta[name="citation_doi"]').attr("content")`,
   'Bangladesh Journals': ``,
   'International Journal of Green Pharmacy': `return $('meta[name="DC.Identifier.DOI"]').attr("content")`,
-  'Hindawi':``,
+  'Hindawi':`return $('meta[name="citation_doi"]').attr("content")`,
   'Journal Drug Delivery & Therapeutics':`return $('meta[name="DC.Identifier.DOI"]').attr("content")`,
   'Jstage Jp':`return $('meta[name="doi"]').attr("content")`,
   'PubMed.gov': `return $('meta[name="citation_doi"]').attr("content")`,
@@ -23,7 +23,7 @@ const selFunc = {
 }
 var count = 0; 
 
-const excludeList = ['Bangladesh Journals','Hindawi','CiteSeerx'];
+const excludeList = ['Bangladesh Journals','CiteSeerx'];
 
 const init = async function () {
   try{

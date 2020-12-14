@@ -84,6 +84,9 @@ const hindawi = {
     years : 'fromYear=2008&toYear=2020',
     
   },
+  functions: {
+    doi: `return $('meta[name="citation_doi"]').attr("content")`
+  },
   selectors:{
     jsons : '#__NEXT_DATA__',
     abstract: 'description',
