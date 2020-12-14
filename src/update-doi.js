@@ -21,6 +21,7 @@ const selFunc = {
   'Taylor and Francis':`return $('meta[name="dc.Identifier"]').attr("content")`,
 
 }
+var count = 0; 
 
 const excludeList = ['Bangladesh Journals','Hindawi','CiteSeerx'];
 
@@ -43,9 +44,10 @@ const fetchAndGet = async function () {
       //await getDoi(doc);
     //} //this method caused cursor timeout.
     //const links = await dbArticles.find({category: {$nin:excludeList}},'link category')
+    const n = 20;
     const links = await dbArticles.find({doi: {$exists : false}},'link category')
     if( links.length > 0 ){
-      const split_links = new Array(Math.ceil(links.length/10)).fill().map(_=>links.splice(0,10));
+      const split_links = new Array(Math.ceil(links.length/n)).fill().map(_=>links.splice(0,n));
       //console.log('Splitted:',split_links);
       for (let i = 0 ; i < split_links.length ;){
         const promises = await split_links[i].map(async function(doc){
@@ -94,7 +96,10 @@ const updateDoi = async function(newDoc){
         const update = {doi:doc.doi};
         dbArticles.updateOne(filter,update,function(error,result){
           if(error) console.error(error);
-          if(result) console.log(`Updated:${result}!\n`);
+          if(result) {
+            count++;
+            console.log(`Updated:${count}!\n`);
+          }
         });
       }
     });
