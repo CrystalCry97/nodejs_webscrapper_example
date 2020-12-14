@@ -106,7 +106,8 @@ const getDoi = async function(doc){
 			//console.log('Updating DOI:',category);
       //updateDoi(link,doi);
       if(doi === undefined) {
-      	throw new Error('Undefined DOI');
+      	console.error('Undefined DOI');
+        return null;
 	    }else{ 
       	return {link,doi}
 	    }
