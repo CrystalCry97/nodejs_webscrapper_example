@@ -41,8 +41,12 @@ const site = {
     filter: '&searchJournal=1&orderBy=score&orderDir=desc',
     //sort:'&sort=Newest',
   },
+  functions:{
+    getDoi : '$(selectors.doi).attr("content")',
+  },
   selectors:{
     results : 'div[class="cmp_pagination"]', //$(result).text(); 
+    doi: 'meta[name="DC.Identifier.DOI"]',
     page_link: 'div[class="title"] > a',
     //title: 'meta[name="citation_title"]', //$(title).attr('content');
     title:'h1[class="page_title"]',
@@ -143,13 +147,14 @@ const getArticleFromHTML = (html,url)=>{
       const yrIndex = year.search(regexYear);
       year = year.slice(yrIndex,yrIndex+4);
       const type = site.type;
-
+      const doi = $(selectors.doi).attr("content")
       return {
         title,
         link,
         abstract: abstracts,
         year,
         category: type,
+        doi,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');

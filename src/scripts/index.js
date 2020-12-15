@@ -1,15 +1,15 @@
 const path = require('path');
 
 const scripts = {}; 
-scripts['pubmed'] = require('./scrapper/pubmed');
+//scripts['sage'] = require('./scrapper/sagejournal');
 
-//const folderPath = path.join(__dirname,'scrapper');
-//require('fs').readdirSync(folderPath).forEach(function(file){
-  //if(file.match(/\.js$/) !== null ){
-    //const name = file.replace('.js',''); 
-    //scripts[name] = require('./scrapper/'+file);
-  //}
+const folderPath = path.join(__dirname,'scrapper');
+require('fs').readdirSync(folderPath).forEach(function(file){
+  if(file.match(/\.js$/) !== null ){
+    const name = file.replace('.js',''); 
+    scripts[name] = require('./scrapper/'+file);
+  }
 
-//});
+});
 module.exports = scripts;
 

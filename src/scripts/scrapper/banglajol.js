@@ -45,6 +45,7 @@ const site = {
   },
   selectors:{
     results : 'div[class="cmp_pagination"]', //$(result).text(); 
+    doi : 'div[class="item doi"] > span[class="value"] > a',
     page_link: 'div[class="title"] > a',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
     title: 'h1[class="page_title"]', //$(title).text();
     year:'div[class="item published"] > div[class="value"]', //$(year).attr('content');
@@ -137,14 +138,18 @@ const getArticleFromHTML = (html,url)=>{
       var abstracts = $(selectors.abstract).text() ;
       if(abstracts === "") abstracts = $(selectors.abstract2).text();
       const regexYear = /\d{4}/; //find \d : digits, {4} :  4 times like 2009. anchor ^ mean explicitly contains strings that begin and end with 4 digits.
-      const year = $(selectors.year).text();
+      let year = $(selectors.year).text();
+      const yrIndex = year.search(regexYear);
+      year = year.slice(yrIndex,yrIndex+4);
       const category = site.type;
+      const doi = $(selectors.doi).attr('href');
       return {
         title,
         link,
         abstract: abstracts,
         year,
         category,
+        doi,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');

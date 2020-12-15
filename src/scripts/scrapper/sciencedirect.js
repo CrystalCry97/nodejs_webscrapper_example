@@ -42,8 +42,13 @@ const site = {
     limit: '&show=',
     sort: '&sortBy=date',
   },
+  functions: {
+    getDoi : 'return $(selectors.doi).attr("content")',
+  },
   selectors:{
     results : 'span[class="search-body-results-text"]', //$(result).text(); 
+    //doi : 'meta[name="dc.identifier"]',
+    doi : 'a[class="doi"]',
     page_link: 'a[class="result-list-title-link u-font-serif text-s"]',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
     title: 'span[class="title-text"]', //$(title).text();
     year:'meta[name="citation_publication_date"]', //$(year).attr('content');
@@ -142,6 +147,7 @@ const getArticleFromHTML = (html,url)=>{
       const yrIndex = (volume) ? volume.search(regexYear) : null;
       const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
       const category = site.type;
+      const doi = $(selectors.doi).attr("href");
 
       return {
         title,
@@ -149,6 +155,7 @@ const getArticleFromHTML = (html,url)=>{
         abstract: abstracts,
         year,
         category,
+        doi,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');

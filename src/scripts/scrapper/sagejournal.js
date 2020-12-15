@@ -44,14 +44,19 @@ const site = {
     sort: '&sortBy=Ppub',
     filter: '&ConceptID=6352',
   },
+  functions: {
+    getDoi : 'return $(selectors.doi).attr("content")'
+  },
   selectors:{
     results : 'div[class="paginationStatus"] > span:nth-child(3)', //$(result).text(); 
+    //doi : 'meta[name="dc.Identifier"]',
+    doi: 'a[class="doiWidgetLink"]',
     page_link: 'span[class="art_title  hlFld-Title"] > a',// $(lnk_title).map((i,e)=>{$(e).attr('href')});
-    title: 'span[class="hlFld-Title"]', //$(title).text();
+    title: 'div[class="hlFld-Title"]', //$(title).text();
     year:'meta[name="dc.Date"]', //$(year).attr('content');
     link:'meta[property="og:url"]',
     abstract: 'div[class="abstractSection abstractInFull"] > p',
-    abstract2: 'section[id="Abs1"] > p',
+    abstract2: 'div[class="hlFld-Abstract"]',
   }
 
 }
@@ -135,7 +140,7 @@ const getArticleFromHTML = (html,url)=>{
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
     //const link = $(selectors.link).attr('content');
     const link = url;
-    const title = $(selectors.title).text();
+    const title = $(selectors.title).text().trim();
     if( typeof title === 'string' || title instanceof String){
       var abstracts = $(selectors.abstract).text() ;
       if(abstracts === "") abstracts = $(selectors.abstract2).text();
@@ -144,13 +149,17 @@ const getArticleFromHTML = (html,url)=>{
       const yrIndex = (volume) ? volume.search(regexYear) : null;
       const year = (volume) ? volume.slice(yrIndex,yrIndex+4) : volume;
       const category = site.type;
+      const doi = $(selectors.doi).attr("href");
 
+      //console.log('\n\nTitle:',title);
+      //console.log('Abstract:',abstracts);
       return {
         title,
         link,
         abstract: abstracts,
         year,
         category,
+        doi,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');

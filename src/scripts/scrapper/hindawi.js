@@ -84,11 +84,15 @@ const hindawi = {
     years : 'fromYear=2008&toYear=2020',
     
   },
+  functions: {
+    doi: `return $('meta[name="citation_doi"]').attr("content")`
+  },
   selectors:{
     jsons : '#__NEXT_DATA__',
     abstract: 'description',
     title: 'title',
     type: 'dc.publisher',
+    doi: 'dc.identifier',
     year: 'citation_year',
   }
 }
@@ -124,7 +128,7 @@ const crawl = async () =>{
 const crawlEachPages = async ({pages},key,pub) => {
   for(let i = 1; i < pages ; ){
     const url = genURL(key,i,pub);
-    console.log('\n\nCRAWLING:',url);
+    //console.log('\n\nCRAWLING:',url);
     const html = await getHTML(url);
     if(html !== null){
       const Json = getJsonFromHTML(html);
@@ -149,7 +153,7 @@ const crawlEachPages = async ({pages},key,pub) => {
 
 const getArticleFromJson = (JsonData) => {
   const rawData = JsonData.props.pageProps.meta.meta_data;
-  const keys = ['description','title','dc.publisher','citation_year'];
+  const keys = ['description','title','dc.publisher','citation_year','dc.identifier'];
   const article = {};
   try{
   keys.map(function(key){
@@ -173,6 +177,7 @@ const cleanData = (article) => {
     abstract: article.description[0].content,
     category: 'Hindawi',
     year: article.citation_year[0].content,
+    doi: article['dc.identifier'][0].content,
   }
 }
 

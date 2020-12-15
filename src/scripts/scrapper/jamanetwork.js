@@ -42,8 +42,12 @@ const site = {
     filter: '&f_SemanticFilterTopics=herbal+medicine',
     sort:'&sort=Newest',
   },
+  functions:{
+    getDoi : '$(selectors.doi).attr("content")'
+  },
   selectors:{
     results : 'h2[class="sr-description"]', //$(result).text(); 
+    doi: 'meta[name="citation_doi"]',
     page_link: 'h3[class="article--title"] > a',
     //title: 'meta[name="citation_title"]', //$(title).attr('content');
     title:'h1[class="meta-article-title "]',
@@ -75,11 +79,12 @@ site.crawl = async () => {
     return promise;
   }catch(error){
     console.log('Error crawling:',site.name);
+    console.error(error);
   }
 }
 // -----------------------------------------------------------------------------
 const crawl = async () =>{
-  for(let i = 0 ; i < keywords.length;){
+  for(let i = 1 ; i < keywords.length ;){
     const key = keywords[i];
     console.log('KEY:',key);
     const url = genURL(key);
@@ -88,8 +93,9 @@ const crawl = async () =>{
     if(html !== null){
       const result = getResultFromHTML(html);
       console.log('RES:',result);
-      await crawlEachPages(result,key);
-
+      if(result !== null){
+        await crawlEachPages(result,key);
+      }
     }
     i++;
   } 
@@ -98,9 +104,9 @@ const crawl = async () =>{
 }
 // ----------------------- crawl each page to get raw html of the page---------
 const crawlEachPages = async ({pages},key) =>{
-  for(let i = 0; i < pages;){
+  for(let i = 1; i < pages + 1;){
     const url = genURL(key,i);
-    console.log('URL:',url);
+    console.log('each_URL:',url);
     const html = await getHTML(url);
     if(html !== null){
       const urls = getURLsFromHTML(html);
@@ -144,13 +150,14 @@ const getArticleFromHTML = (html,url)=>{
       const yrIndex = year.search(regexYear);
       year = year.slice(yrIndex,yrIndex+4);
       const type = site.type;
-
+      const doi = $(selectors.doi).attr("content");
       return {
         title,
         link,
         abstract: abstracts,
         year,
         category: type,
+        doi,
       }
     }else{
       throw new Error('Invalid Articles due to missing title');

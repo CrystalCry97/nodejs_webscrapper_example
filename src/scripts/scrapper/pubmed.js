@@ -5,29 +5,6 @@ const {promisify}   = require('util');
 const {getHTML,insertDB,insertErrorHandler,sleep}       = require('../../lib/crawler');
 const keywords = require('../../lib/keywords').load();
 
-//const keywords = [
-  //'Drug-herb interactions',
-  //'Drug-food interactions',
-  //'Botanical medicine',
-  //'herbal medicine',
-  //'traditional medicine',
-  //'alternative medicine',
-  //'complementary medicine',
-  //'P450 cytochromes',
-  //'organic anionic transporters',
-  //'organic anionic',
-  //'organic cationic transporters',
-  //'organic cationic',
-  //'organic cationic transport',
-  //'P-glycoprotein',
-  //'Drug transporters',
-  //'Organic anion transporting polypeptide',
-  //'ABC:ATP',
-  //'ABC:ATP binding',
-  //'ABC:ATP binding cassette transporter super family',
-
-//]
-
 const site = {
   name: 'pubmed',
   type: 'PubMed.gov', 
@@ -50,10 +27,14 @@ const site = {
       '&filter=pubt.systematicreview'
     ],
   },
+  functions:{
+    getDoi : '$(selectors.doi).attr("content")',
+  },
 selectors: {
     page_link: 'h1.heading-title > a',
     results: 'div.results-amount > span.value',
-    doi: 'a[class="id-link"]',
+    //doi: 'a[class="id-link"]',
+    doi: 'meta[name="citation_doi"]',
     articles: 'div.results-article',
     year: 'meta[name="citation_date"]',
     title: 'h1.heading-title',
@@ -110,7 +91,7 @@ const crawlEachPages = async ({pages},key) =>{
       const urls = getURLsFromHTML(html);
       const n = 10; // urls per array.
       const url_list = new Array(Math.ceil(urls.length/n)).fill().map(_=>urls.splice(0,n)); //devide urls into list of urls
-      console.log('URLs:',url_list);
+      //console.log('URLs:',url_list);
       // should I use for or map ?
       for(let x = 0; x < url_list.length;){
         const promises = await url_list[x].map(async function(url){
@@ -135,16 +116,19 @@ const getArticleFromHTML = (html,link) => {
   try{
     const {selectors} = site;
     const $ = cheerio.load(html,{normalizeWhitespace:true,xmlMode:true});
-    console.log('Getting Article:',link);
+    //console.log('Getting Article:',link);
     //------ get title
     let title = $(selectors.title).first().text();
-    title = title.trim().substr(0,255);
+    //title = title.trim().substr(0,255);
     
     //------ get description.
     if(typeof title == 'string' || title instanceof String){
+      const regexYear = /\d{4}/;
       let abstract = $(selectors.abstracts).first().text();
       let year = $(selectors.year).attr('content');
-      const doi = $(selectors.doi).first().text();
+      const yrIndex = year.search(regexYear);
+      year = year.slice(yrIndex,yrIndex+4);
+      const doi = $(selectors.doi).attr("content");
 
       return {
         title,
