@@ -237,7 +237,7 @@ const site = {
 
 }
 ```
-- we perform crawling, by appending the `keywords` from the `keywords.txt` file and `queries` variable to our `searchURL`
+- we perform crawling, by appending the `keywords` from the `keywords.txt` file and `site.queries` variable to our `site.searchURL`
 - we loops through all the keywords in the `crawl()` function.
 - we using the `genURL` function to generate new URL.
 ```js
@@ -253,5 +253,5 @@ const site = {
 - we get the result count, and page count from the HTML using the `getResultFromHTML` page, to loop over it in `crawlEachPage` function.
 - then we will get all the urls of articles using `getURLsFromHTML` and store it in list.
 - then we go through each of that article URL, fetch the HTML, and scrap it using `getArticleFromHTML` function.
-- this function, make use of `selectors` variable we declared in `site` variable, to scrap for the article information.
+- this function, make use of `site.selectors` variable we declared in `site` variable, to scrap for the article information.
 - it then return an articles and stored it into the DB.
