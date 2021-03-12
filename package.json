@@ -4,8 +4,8 @@
   "description": "Simple web scrapper script managger written in javascript using node.js runtime",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js",
+    "dev": "nodemon  src/testmap.js",
+    "start": "node src/testmap.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
