@@ -255,3 +255,6 @@ const site = {
 - then we go through each of that article URL, fetch the HTML, and scrap it using `getArticleFromHTML` function.
 - this function, make use of `site.selectors` variable we declared in `site` variable, to scrap for the article information.
 - it then return an articles and stored it into the DB.
+
+## NOTES
+- this is a unfinished example, prototype.
