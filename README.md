@@ -1,5 +1,11 @@
 # nodejs_webscrapper_example
 
+# Running this.
+- update .env file
+- update keyword in keywords.txt
+- cd into project folder
+- run `npm start` or `node src/testmap.js`
+
 - main script is `testmap.js`.
 - `scripts/scrapper` contains scrapper script for each website we want to scrap.
 - `scripts/index` is simply a loader that load the scrapper scripts as functions we will call in testmap.js
