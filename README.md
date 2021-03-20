@@ -21,6 +21,8 @@
 - each crawled domain/site will create their own collection. 
 - after the script finish scrapp all link, it will merge the collections into single collection. 
 
+## Cron file location in CentOS
+var/spool/cron/hdidev
 
 ## Scrapper script example.
 ```js
